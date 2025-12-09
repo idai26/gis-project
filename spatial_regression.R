@@ -8,7 +8,7 @@ setwd("~/Library/CloudStorage/Box-Box/DSAN-6750/Minneapolis")
 
 # load census data
 census_data <- read_csv("mpls_tracts_census.csv") |>
-  select(c(1:10, 91, 163:188)) |>
+  select(c(1:10, 91, contains("pct_"))) |>
   mutate(GEOID = as.character(GEOID))
 
 # load full election results
@@ -52,7 +52,7 @@ joined_data_pca_sf <- joined_data_sf |>
 
 
 # generate PCA of census variables
-pca_census_data_prep <- joined_data_sf |> select(c(11:37))
+pca_census_data_prep <- census_data |> select(-c(1:10))
 
 pca_census_data <- pca_census_data_prep |>
   prcomp(scale. = TRUE)
@@ -92,13 +92,13 @@ pca_map_plot <- function(data, pc, subtitle = NULL) {
     )
 }
 
-pca_map_plot(joined_data_pca_sf, "PC1", "PC1")
+pca_map_plot(joined_data_pca_census_sf, "PC1", "PC1")
 
 
 
 # perform CAR (spatial error) model with stepwise selection
 # This corrects for spatial autocorrelation in the errors
-predictor_vars <- names(joined_data_sf)[11:37]
+predictor_vars <- names(census_data |> select(-c(1:10)))
 
 # stepwise selection function for spatial error models (CAR)
 stepwise_spatial <- function(y_var, predictor_vars, data, listw, 

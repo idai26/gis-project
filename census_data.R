@@ -225,6 +225,59 @@ hh_relationship_vars <- c(
   hh_rel_in_gq = "B09019_026"
 )
 
+# Table B01001: Sex by Age
+age_vars <- c(
+  age_total = "B01001_001",
+  # Male age groups
+  age_m_under5 = "B01001_003",
+  age_m_5_9 = "B01001_004",
+  age_m_10_14 = "B01001_005",
+  age_m_15_17 = "B01001_006",
+  age_m_18_19 = "B01001_007",
+  age_m_20 = "B01001_008",
+  age_m_21 = "B01001_009",
+  age_m_22_24 = "B01001_010",
+  age_m_25_29 = "B01001_011",
+  age_m_30_34 = "B01001_012",
+  age_m_35_39 = "B01001_013",
+  age_m_40_44 = "B01001_014",
+  age_m_45_49 = "B01001_015",
+  age_m_50_54 = "B01001_016",
+  age_m_55_59 = "B01001_017",
+  age_m_60_61 = "B01001_018",
+  age_m_62_64 = "B01001_019",
+  age_m_65_66 = "B01001_020",
+  age_m_67_69 = "B01001_021",
+  age_m_70_74 = "B01001_022",
+  age_m_75_79 = "B01001_023",
+  age_m_80_84 = "B01001_024",
+  age_m_85_plus = "B01001_025",
+  # Female age groups
+  age_f_under5 = "B01001_027",
+  age_f_5_9 = "B01001_028",
+  age_f_10_14 = "B01001_029",
+  age_f_15_17 = "B01001_030",
+  age_f_18_19 = "B01001_031",
+  age_f_20 = "B01001_032",
+  age_f_21 = "B01001_033",
+  age_f_22_24 = "B01001_034",
+  age_f_25_29 = "B01001_035",
+  age_f_30_34 = "B01001_036",
+  age_f_35_39 = "B01001_037",
+  age_f_40_44 = "B01001_038",
+  age_f_45_49 = "B01001_039",
+  age_f_50_54 = "B01001_040",
+  age_f_55_59 = "B01001_041",
+  age_f_60_61 = "B01001_042",
+  age_f_62_64 = "B01001_043",
+  age_f_65_66 = "B01001_044",
+  age_f_67_69 = "B01001_045",
+  age_f_70_74 = "B01001_046",
+  age_f_75_79 = "B01001_047",
+  age_f_80_84 = "B01001_048",
+  age_f_85_plus = "B01001_049"
+)
+
 # Combine all variables
 all_vars <- c(
   race_vars,
@@ -242,7 +295,8 @@ all_vars <- c(
   year_moved_vars,
   rent_vars,
   rent_burden_vars,
-  hh_relationship_vars
+  hh_relationship_vars,
+  age_vars
 )
 
 # -----------------------------------------------------------------------------
@@ -357,7 +411,27 @@ mpls_tracts_sf <- mpls_tracts_sf |>
     pct_moved_2021_later = ((moved_owner_2021_later + moved_renter_2021_later) / moved_total) * 100,
     
     # Same-sex households - % same-sex spouse + partner (B09019)
-    pct_same_sex_hh = ((hh_rel_spouse_same + hh_rel_partner_same) / hh_rel_in_hh) * 100
+    pct_same_sex_hh = ((hh_rel_spouse_same + hh_rel_partner_same) / hh_rel_in_hh) * 100,
+    
+    # Age distribution (B01001)
+    # First calculate combined age buckets
+    age_0_17 = age_m_under5 + age_m_5_9 + age_m_10_14 + age_m_15_17 +
+               age_f_under5 + age_f_5_9 + age_f_10_14 + age_f_15_17,
+    age_18_34 = age_m_18_19 + age_m_20 + age_m_21 + age_m_22_24 + age_m_25_29 + age_m_30_34 +
+                age_f_18_19 + age_f_20 + age_f_21 + age_f_22_24 + age_f_25_29 + age_f_30_34,
+    age_35_49 = age_m_35_39 + age_m_40_44 + age_m_45_49 +
+                age_f_35_39 + age_f_40_44 + age_f_45_49,
+    age_50_64 = age_m_50_54 + age_m_55_59 + age_m_60_61 + age_m_62_64 +
+                age_f_50_54 + age_f_55_59 + age_f_60_61 + age_f_62_64,
+    age_65_plus = age_m_65_66 + age_m_67_69 + age_m_70_74 + age_m_75_79 + age_m_80_84 + age_m_85_plus +
+                  age_f_65_66 + age_f_67_69 + age_f_70_74 + age_f_75_79 + age_f_80_84 + age_f_85_plus,
+    
+    # Now calculate percentages for each age bucket
+    pct_age_0_17 = (age_0_17 / age_total) * 100,
+    pct_age_18_34 = (age_18_34 / age_total) * 100,
+    pct_age_35_49 = (age_35_49 / age_total) * 100,
+    pct_age_50_64 = (age_50_64 / age_total) * 100,
+    pct_age_65_plus = (age_65_plus / age_total) * 100
   )
 
 # -----------------------------------------------------------------------------
@@ -374,13 +448,14 @@ mpls_tracts_sf |>
   summarise(
     across(
       c(med_hh_income, med_gross_rent, pct_white, pct_black, pct_hispanic, 
-        pct_bachelors_plus, pct_owner_occupied, unemployment_rate),
+        pct_bachelors_plus, pct_owner_occupied, unemployment_rate,
+        pct_age_0_17, pct_age_18_34, pct_age_35_49, pct_age_50_64, pct_age_65_plus),
       list(mean = ~ mean(.x, na.rm = TRUE), median = ~ median(.x, na.rm = TRUE)),
       .names = "{.col}_{.fn}"
     )
   ) |>
   pivot_longer(everything(), names_to = "variable", values_to = "value") |>
-  print(n = 20)
+  print(n = 30)
 
 # -----------------------------------------------------------------------------
 # Save the data
@@ -477,6 +552,25 @@ ggplot(mpls_tracts_sf) +
   ) +
   labs(
     title = "Percent Same-Sex Households by Census Tract",
+    subtitle = "Hennepin County, MN (ACS 2019-2023)",
+    caption = "Source: U.S. Census Bureau, American Community Survey"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank()
+  )
+
+# Age 18-34 map
+ggplot(mpls_tracts_sf) +
+  geom_sf(aes(fill = pct_age_18_34), color = "white", size = 0.1) +
+  scale_fill_viridis_c(
+    name = "% Age 18-34",
+    option = "mako"
+  ) +
+  labs(
+    title = "Percent Age 18-34 by Census Tract",
     subtitle = "Hennepin County, MN (ACS 2019-2023)",
     caption = "Source: U.S. Census Bureau, American Community Survey"
   ) +
