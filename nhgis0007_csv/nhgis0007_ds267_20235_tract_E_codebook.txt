@@ -1,0 +1,454 @@
+--------------------------------------------------------------------------------
+Codebook for NHGIS data file 'nhgis0007_ds267_20235_tract_E'
+--------------------------------------------------------------------------------
+ 
+Contents
+    - Data Summary
+    - Data Dictionary
+    - Citation and Use
+ 
+Additional documentation on NHGIS data sources is available at: 
+    https://www.nhgis.org/documentation/tabular-data 
+ 
+--------------------------------------------------------------------------------
+Data Summary
+--------------------------------------------------------------------------------
+ 
+Year:             2019-2023
+Geographic level: Census Tract (by State--County)
+Extent:           Minnesota
+Dataset:          2023 American Community Survey: 5-Year Data [2019-2023, Block Groups & Larger Areas]
+   NHGIS code:    2019_2023_ACS5a
+   NHGIS ID:      ds267
+Breakdown(s):     Geographic Component:
+                     Total area (00)
+Data type(s):     (E) Estimates
+ 
+Tables:
+ 
+1. Race
+   Universe:    Total population
+   Source code: B02001
+   NHGIS code:  ASN2
+ 
+2. Hispanic or Latino Origin by Race
+   Universe:    Total population
+   Source code: B03002
+   NHGIS code:  ASOA
+ 
+3. Means of Transportation to Work
+   Universe:    Workers 16 years and over
+   Source code: B08301
+   NHGIS code:  ASOR
+ 
+4. Household Type (Including Living Alone)
+   Universe:    Households
+   Source code: B11001
+   NHGIS code:  ASOW
+ 
+5. School Enrollment by Detailed Level of School for the Population 3 Years and Over
+   Universe:    Population 3 years and over
+   Source code: B14007
+   NHGIS code:  ASPS
+ 
+6. Educational Attainment for the Population 25 Years and Over
+   Universe:    Population 25 years and over
+   Source code: B15003
+   NHGIS code:  ASP3
+ 
+7. Household Language by Household Limited English Speaking Status
+   Universe:    Households
+   Source code: C16002
+   NHGIS code:  ASQG
+ 
+8. Median Household Income in the Past 12 Months (in 2023 Inflation-Adjusted Dollars)
+   Universe:    Households
+   Source code: B19013
+   NHGIS code:  ASQP
+ 
+9. Employment Status for the Population 16 Years and Over
+   Universe:    Population 16 years and over
+   Source code: B23025
+   NHGIS code:  ASSR
+ 
+10. Tenure
+    Universe:    Occupied housing units
+    Source code: B25003
+    NHGIS code:  ASS9
+ 
+11. Units in Structure
+    Universe:    Housing units
+    Source code: B25024
+    NHGIS code:  ASUG
+ 
+12. Year Structure Built
+    Universe:    Housing units
+    Source code: B25034
+    NHGIS code:  ASUJ
+ 
+13. Tenure by Year Householder Moved into Unit
+    Universe:    Occupied housing units
+    Source code: B25038
+    NHGIS code:  ASUN
+ 
+14. Median Gross Rent (Dollars)
+    Universe:    Renter-occupied housing units paying cash rent
+    Source code: B25064
+    NHGIS code:  ASVB
+ 
+15. Gross Rent as a Percentage of Household Income in the Past 12 Months
+    Universe:    Renter-occupied housing units
+    Source code: B25070
+    NHGIS code:  ASVH
+ 
+--------------------------------------------------------------------------------
+Data Dictionary
+--------------------------------------------------------------------------------
+ 
+Context Fields 
+        GISJOIN:     GIS Join Match Code
+        YEAR:        Data File Year
+        STUSAB:      State Postal Abbreviation
+        REGIONA:     Region Code
+        DIVISIONA:   Division Code
+        STATE:       State Name
+        STATEA:      State Code
+        COUNTY:      County Name
+        COUNTYA:     County Code
+        COUSUBA:     County Subdivision Code
+        PLACEA:      Place/Remainder Code
+        TRACTA:      Census Tract Code
+        BLKGRPA:     Block Group Code
+        CONCITA:     Consolidated City Code
+        AIANHHA:     American Indian Area/Alaska Native Area/Hawaiian Home Land Code
+        RES_ONLYA:   American Indian Area/Alaska Native Area (Reservation or Statistical Entity Only) Code
+        TRUSTA:      American Indian Area (Off-Reservation Trust Land Only)/Hawaiian Home Land Code
+        AIHHTLI:     American Indian/Hawaiian Home Land Trust Land Indicator
+        AITSA:       Tribal Subdivision/Remainder Code
+        ANRCA:       Alaska Native Regional Corporation Code
+        CBSAA:       Metropolitan Statistical Area/Micropolitan Statistical Area Code
+        CSAA:        Combined Statistical Area Code
+        METDIVA:     Metropolitan Division Code
+        CNECTA:      New England City and Town Combined Statistical Area
+        NECTADIV:    New England City and Town Area Division
+        UAA:         Urban Area Code
+        CDCURRA:     Congressional District (2023-2025, 118th Congress) Code
+        SLDUA:       State Legislative District (Upper Chamber) Code
+        SLDLA:       State Legislative District (Lower Chamber) Code
+        ZCTA5A:      5-Digit ZIP Code Tabulation Area Code
+        SUBMCDA:     Subminor Civil Division Code
+        SDELMA:      School District (Elementary)/Remainder Code
+        SDSECA:      School District (Secondary)/Remainder Code
+        SDUNIA:      School District (Unified)/Remainder Code
+        PCI:         Principal City Indicator
+        PUMAA:       Public Use Microdata Area Code
+        GEO_ID:      Census Geographic Area Identifier
+        NAME:        Area Name
+        BTTRA:       Tribal Census Tract Code
+        BTBGA:       Tribal Block Group Code
+        TL_GEO_ID:   TIGER/Line Shapefile Geographic Area Identifier
+ 
+Data Type (E):
+    Estimates
+ 
+    Table 1:     Race
+    Universe:    Total population
+    Source code: B02001
+    NHGIS code:  ASN2
+        ASN2E001:    Total
+        ASN2E002:    White alone
+        ASN2E003:    Black or African American alone
+        ASN2E004:    American Indian and Alaska Native alone
+        ASN2E005:    Asian alone
+        ASN2E006:    Native Hawaiian and Other Pacific Islander alone
+        ASN2E007:    Some Other Race alone
+        ASN2E008:    Two or More Races
+        ASN2E009:    Two or More Races: Two races including Some Other Race
+        ASN2E010:    Two or More Races: Two races excluding Some Other Race, and three or more races
+ 
+    Table 2:     Hispanic or Latino Origin by Race
+    Universe:    Total population
+    Source code: B03002
+    NHGIS code:  ASOA
+        ASOAE001:    Total
+        ASOAE002:    Not Hispanic or Latino
+        ASOAE003:    Not Hispanic or Latino: White alone
+        ASOAE004:    Not Hispanic or Latino: Black or African American alone
+        ASOAE005:    Not Hispanic or Latino: American Indian and Alaska Native alone
+        ASOAE006:    Not Hispanic or Latino: Asian alone
+        ASOAE007:    Not Hispanic or Latino: Native Hawaiian and Other Pacific Islander alone
+        ASOAE008:    Not Hispanic or Latino: Some other race alone
+        ASOAE009:    Not Hispanic or Latino: Two or more races
+        ASOAE010:    Not Hispanic or Latino: Two or more races: Two races including Some other race
+        ASOAE011:    Not Hispanic or Latino: Two or more races: Two races excluding Some other race, and three or more races
+        ASOAE012:    Hispanic or Latino
+        ASOAE013:    Hispanic or Latino: White alone
+        ASOAE014:    Hispanic or Latino: Black or African American alone
+        ASOAE015:    Hispanic or Latino: American Indian and Alaska Native alone
+        ASOAE016:    Hispanic or Latino: Asian alone
+        ASOAE017:    Hispanic or Latino: Native Hawaiian and Other Pacific Islander alone
+        ASOAE018:    Hispanic or Latino: Some other race alone
+        ASOAE019:    Hispanic or Latino: Two or more races
+        ASOAE020:    Hispanic or Latino: Two or more races: Two races including Some other race
+        ASOAE021:    Hispanic or Latino: Two or more races: Two races excluding Some other race, and three or more races
+ 
+    Table 3:     Means of Transportation to Work
+    Universe:    Workers 16 years and over
+    Source code: B08301
+    NHGIS code:  ASOR
+        ASORE001:    Total
+        ASORE002:    Car, truck, or van
+        ASORE003:    Car, truck, or van: Drove alone
+        ASORE004:    Car, truck, or van: Carpooled
+        ASORE005:    Car, truck, or van: Carpooled: In 2-person carpool
+        ASORE006:    Car, truck, or van: Carpooled: In 3-person carpool
+        ASORE007:    Car, truck, or van: Carpooled: In 4-person carpool
+        ASORE008:    Car, truck, or van: Carpooled: In 5- or 6-person carpool
+        ASORE009:    Car, truck, or van: Carpooled: In 7-or-more-person carpool
+        ASORE010:    Public transportation (excluding taxicab)
+        ASORE011:    Public transportation (excluding taxicab): Bus
+        ASORE012:    Public transportation (excluding taxicab): Subway or elevated rail
+        ASORE013:    Public transportation (excluding taxicab): Long-distance train or commuter rail
+        ASORE014:    Public transportation (excluding taxicab): Light rail, streetcar or trolley (carro publico in Puerto Rico)
+        ASORE015:    Public transportation (excluding taxicab): Ferryboat
+        ASORE016:    Taxicab
+        ASORE017:    Motorcycle
+        ASORE018:    Bicycle
+        ASORE019:    Walked
+        ASORE020:    Other means
+        ASORE021:    Worked from home
+ 
+    Table 4:     Household Type (Including Living Alone)
+    Universe:    Households
+    Source code: B11001
+    NHGIS code:  ASOW
+        ASOWE001:    Total
+        ASOWE002:    Family households
+        ASOWE003:    Family households: Married-couple family
+        ASOWE004:    Family households: Other family
+        ASOWE005:    Family households: Other family: Male householder, no spouse present
+        ASOWE006:    Family households: Other family: Female householder, no spouse present
+        ASOWE007:    Nonfamily households
+        ASOWE008:    Nonfamily households: Householder living alone
+        ASOWE009:    Nonfamily households: Householder not living alone
+ 
+    Table 5:     School Enrollment by Detailed Level of School for the Population 3 Years and Over
+    Universe:    Population 3 years and over
+    Source code: B14007
+    NHGIS code:  ASPS
+        ASPSE001:    Total
+        ASPSE002:    Enrolled in school
+        ASPSE003:    Enrolled in school: Enrolled in nursery school, preschool
+        ASPSE004:    Enrolled in school: Enrolled in kindergarten
+        ASPSE005:    Enrolled in school: Enrolled in grade 1
+        ASPSE006:    Enrolled in school: Enrolled in grade 2
+        ASPSE007:    Enrolled in school: Enrolled in grade 3
+        ASPSE008:    Enrolled in school: Enrolled in grade 4
+        ASPSE009:    Enrolled in school: Enrolled in grade 5
+        ASPSE010:    Enrolled in school: Enrolled in grade 6
+        ASPSE011:    Enrolled in school: Enrolled in grade 7
+        ASPSE012:    Enrolled in school: Enrolled in grade 8
+        ASPSE013:    Enrolled in school: Enrolled in grade 9
+        ASPSE014:    Enrolled in school: Enrolled in grade 10
+        ASPSE015:    Enrolled in school: Enrolled in grade 11
+        ASPSE016:    Enrolled in school: Enrolled in grade 12
+        ASPSE017:    Enrolled in school: Enrolled in college, undergraduate years
+        ASPSE018:    Enrolled in school: Graduate or professional school
+        ASPSE019:    Not enrolled in school
+ 
+    Table 6:     Educational Attainment for the Population 25 Years and Over
+    Universe:    Population 25 years and over
+    Source code: B15003
+    NHGIS code:  ASP3
+        ASP3E001:    Total
+        ASP3E002:    No schooling completed
+        ASP3E003:    Nursery school
+        ASP3E004:    Kindergarten
+        ASP3E005:    1st grade
+        ASP3E006:    2nd grade
+        ASP3E007:    3rd grade
+        ASP3E008:    4th grade
+        ASP3E009:    5th grade
+        ASP3E010:    6th grade
+        ASP3E011:    7th grade
+        ASP3E012:    8th grade
+        ASP3E013:    9th grade
+        ASP3E014:    10th grade
+        ASP3E015:    11th grade
+        ASP3E016:    12th grade, no diploma
+        ASP3E017:    Regular high school diploma
+        ASP3E018:    GED or alternative credential
+        ASP3E019:    Some college, less than 1 year
+        ASP3E020:    Some college, 1 or more years, no degree
+        ASP3E021:    Associate's degree
+        ASP3E022:    Bachelor's degree
+        ASP3E023:    Master's degree
+        ASP3E024:    Professional school degree
+        ASP3E025:    Doctorate degree
+ 
+    Table 7:     Household Language by Household Limited English Speaking Status
+    Universe:    Households
+    Source code: C16002
+    NHGIS code:  ASQG
+        ASQGE001:    Total
+        ASQGE002:    English only
+        ASQGE003:    Spanish
+        ASQGE004:    Spanish: Limited English speaking household
+        ASQGE005:    Spanish: Not a limited English speaking household
+        ASQGE006:    Other Indo-European languages
+        ASQGE007:    Other Indo-European languages: Limited English speaking household
+        ASQGE008:    Other Indo-European languages: Not a limited English speaking household
+        ASQGE009:    Asian and Pacific Island languages
+        ASQGE010:    Asian and Pacific Island languages: Limited English speaking household
+        ASQGE011:    Asian and Pacific Island languages: Not a limited English speaking household
+        ASQGE012:    Other languages
+        ASQGE013:    Other languages: Limited English speaking household
+        ASQGE014:    Other languages: Not a limited English speaking household
+ 
+    Table 8:     Median Household Income in the Past 12 Months (in 2023 Inflation-Adjusted Dollars)
+    Universe:    Households
+    Source code: B19013
+    NHGIS code:  ASQP
+        ASQPE001:    Median household income in the past 12 months (in 2023 inflation-adjusted dollars)
+ 
+    Table 9:     Employment Status for the Population 16 Years and Over
+    Universe:    Population 16 years and over
+    Source code: B23025
+    NHGIS code:  ASSR
+        ASSRE001:    Total
+        ASSRE002:    In labor force
+        ASSRE003:    In labor force: Civilian labor force
+        ASSRE004:    In labor force: Civilian labor force: Employed
+        ASSRE005:    In labor force: Civilian labor force: Unemployed
+        ASSRE006:    In labor force: Armed Forces
+        ASSRE007:    Not in labor force
+ 
+    Table 10:    Tenure
+    Universe:    Occupied housing units
+    Source code: B25003
+    NHGIS code:  ASS9
+        ASS9E001:    Total
+        ASS9E002:    Owner occupied
+        ASS9E003:    Renter occupied
+ 
+    Table 11:    Units in Structure
+    Universe:    Housing units
+    Source code: B25024
+    NHGIS code:  ASUG
+        ASUGE001:    Total
+        ASUGE002:    1, detached
+        ASUGE003:    1, attached
+        ASUGE004:    2
+        ASUGE005:    3 or 4
+        ASUGE006:    5 to 9
+        ASUGE007:    10 to 19
+        ASUGE008:    20 to 49
+        ASUGE009:    50 or more
+        ASUGE010:    Mobile home
+        ASUGE011:    Boat, RV, van, etc.
+ 
+    Table 12:    Year Structure Built
+    Universe:    Housing units
+    Source code: B25034
+    NHGIS code:  ASUJ
+        ASUJE001:    Total
+        ASUJE002:    Built 2020 or later
+        ASUJE003:    Built 2010 to 2019
+        ASUJE004:    Built 2000 to 2009
+        ASUJE005:    Built 1990 to 1999
+        ASUJE006:    Built 1980 to 1989
+        ASUJE007:    Built 1970 to 1979
+        ASUJE008:    Built 1960 to 1969
+        ASUJE009:    Built 1950 to 1959
+        ASUJE010:    Built 1940 to 1949
+        ASUJE011:    Built 1939 or earlier
+ 
+    Table 13:    Tenure by Year Householder Moved into Unit
+    Universe:    Occupied housing units
+    Source code: B25038
+    NHGIS code:  ASUN
+        ASUNE001:    Total
+        ASUNE002:    Owner occupied
+        ASUNE003:    Owner occupied: Moved in 2021 or later
+        ASUNE004:    Owner occupied: Moved in 2018 to 2020
+        ASUNE005:    Owner occupied: Moved in 2010 to 2017
+        ASUNE006:    Owner occupied: Moved in 2000 to 2009
+        ASUNE007:    Owner occupied: Moved in 1990 to 1999
+        ASUNE008:    Owner occupied: Moved in 1989 or earlier
+        ASUNE009:    Renter occupied
+        ASUNE010:    Renter occupied: Moved in 2021 or later
+        ASUNE011:    Renter occupied: Moved in 2018 to 2020
+        ASUNE012:    Renter occupied: Moved in 2010 to 2017
+        ASUNE013:    Renter occupied: Moved in 2000 to 2009
+        ASUNE014:    Renter occupied: Moved in 1990 to 1999
+        ASUNE015:    Renter occupied: Moved in 1989 or earlier
+ 
+    Table 14:    Median Gross Rent (Dollars)
+    Universe:    Renter-occupied housing units paying cash rent
+    Source code: B25064
+    NHGIS code:  ASVB
+        ASVBE001:    Median gross rent
+ 
+    Table 15:    Gross Rent as a Percentage of Household Income in the Past 12 Months
+    Universe:    Renter-occupied housing units
+    Source code: B25070
+    NHGIS code:  ASVH
+        ASVHE001:    Total
+        ASVHE002:    Less than 10.0 percent
+        ASVHE003:    10.0 to 14.9 percent
+        ASVHE004:    15.0 to 19.9 percent
+        ASVHE005:    20.0 to 24.9 percent
+        ASVHE006:    25.0 to 29.9 percent
+        ASVHE007:    30.0 to 34.9 percent
+        ASVHE008:    35.0 to 39.9 percent
+        ASVHE009:    40.0 to 49.9 percent
+        ASVHE010:    50.0 percent or more
+        ASVHE011:    Not computed
+ 
+--------------------------------------------------------------------------------
+Citation and Use of NHGIS Data
+--------------------------------------------------------------------------------
+ 
+All persons are granted a limited license to use this documentation and the
+accompanying data, subject to the following conditions:
+
+* REDISTRIBUTION: You will not redistribute the data without permission.
+
+  You may publish a subset of the data to meet journal requirements for accessing 
+  data related to a particular publication. Contact us for permission for any other 
+  redistribution; we will consider requests for free and commercial redistribution.
+
+* CITATION: You will cite NHGIS appropriately.
+
+    * Publications and research reports employing NHGIS data (either tabular or GIS) 
+      should include the following citation:
+
+        Jonathan Schroeder, David Van Riper, Steven Manson, Katherine Knowles, Tracy Kugler, Finn Roberts, and Steven Ruggles. 
+        IPUMS National Historical Geographic Information System: Version 20.0 
+        [dataset]. Minneapolis, MN: IPUMS. 2025. 
+        http://doi.org/10.18128/D050.V20.0
+
+    * For policy briefs, online resources, or articles in the popular press, we 
+      recommend that you cite the use of NHGIS data as follows:
+
+        IPUMS NHGIS, University of Minnesota, www.nhgis.org.
+
+These terms of use are a legally binding agreement. You can use the data only in 
+accordance with these terms, and any other use is a violation of the agreement. 
+Violations may result in revocation of the agreement and prohibition from using other 
+IPUMS data. If IPUMS or our partners are harmed from your violation, you are 
+responsible for all damages, including reasonable attorney's fees and expenses.
+        
+In addition, we request that users send us a copy of any publications, research
+reports, or educational material making use of the data or documentation.
+
+Send electronic material to: nhgis@umn.edu
+
+Printed matter should be sent to:
+
+    IPUMS NHGIS
+    Institute for Social Research and Data Innovation
+    University of Minnesota
+    50 Willey Hall
+    225 19th Ave S
+    Minneapolis, MN 55455
