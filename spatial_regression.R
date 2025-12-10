@@ -3,6 +3,7 @@ library(sf)
 library(spdep)
 library(sp)
 library(spatialreg)
+library(mapview)
 
 setwd("~/Library/CloudStorage/Box-Box/DSAN-6750/Minneapolis")
 
@@ -64,12 +65,17 @@ factor_loadings_census <- pca_census_data$rotation |>
 
 # join census PCA data to joined_data_sf
 # add GEOID to PCA results to ensure proper joining
+# rename census PCA columns to have "census_" prefix
 pca_results_census_with_id <- joined_data_sf |>
   select(GEOID) |>
-  bind_cols(as.data.frame(pca_census_data$x))
+  bind_cols(as.data.frame(pca_census_data$x)) |>
+  rename_with(~ paste0("census_", .x), starts_with("PC"))
 
-joined_data_pca_census_sf <- joined_data_sf |>
-  left_join(pca_results_census_with_id, by = c("GEOID" = "GEOID"))
+# create combined dataframe with both electoral and census PCA
+# ensure it remains an sf object after joining
+joined_data_pca_sf <- joined_data_pca_sf |>
+  left_join(pca_results_census_with_id, by = c("GEOID" = "GEOID")) |>
+  st_as_sf()
 
 # plot PCA by tract
 pca_map_plot <- function(data, pc, subtitle = NULL) {
@@ -92,206 +98,62 @@ pca_map_plot <- function(data, pc, subtitle = NULL) {
     )
 }
 
-pca_map_plot(joined_data_pca_census_sf, "PC1", "PC1")
+pca_map_plot(joined_data_pca_sf, "PC1", "PC1")
 
+# calculate Moran's I for Election PC1
+moran_test_election <- moran.test(joined_data_pca_sf$PC1, lw)
+print(moran_test_election)
 
+# perform CAR (spatial error) model
+predictor_vars <- c("pct_white", "pct_bachelors_plus", "pct_higher_ed", "pct_english_only", 
+"pct_owner_occupied", "pct_wfh", "pct_transit", "pct_drive_alone", "pct_rent_burdened", "pct_built_post2000",
+"pct_multifamily", "pct_moved_pre2000", "pct_moved_2021_later", "pct_same_sex_hh", 
+"pct_age_0_17", "pct_age_18_34", "pct_age_35_49", "pct_age_50_64")
 
-# perform CAR (spatial error) model with stepwise selection
-# This corrects for spatial autocorrelation in the errors
-predictor_vars <- names(census_data |> select(-c(1:10)))
-
-# stepwise selection function for spatial error models (CAR)
-stepwise_spatial <- function(y_var, predictor_vars, data, listw, 
-                             direction = "backward", alpha = 0.1) {
-  
-  if (direction == "backward") {
-    # Start with full model
-    current_vars <- predictor_vars
-    formula_str <- paste(y_var, "~", paste(current_vars, collapse = " + "))
-    current_model <- spatialreg::errorsarlm(as.formula(formula_str), data = data, listw = listw, Durbin = FALSE)
-    current_aic <- AIC(current_model)
-    
-    cat("\n=== BACKWARD STEPWISE SELECTION ===\n")
-    cat(sprintf("Starting model AIC: %.2f with %d variables\n", current_aic, length(current_vars)))
-    
-    improved <- TRUE
-    iteration <- 1
-    
-    while (improved && length(current_vars) > 1) {
-      improved <- FALSE
-      best_aic <- current_aic
-      best_vars <- current_vars
-      var_to_remove <- NULL
-      
-      # Try removing each variable
-      for (var in current_vars) {
-        test_vars <- setdiff(current_vars, var)
-        formula_str <- paste(y_var, "~", paste(test_vars, collapse = " + "))
-        test_model <- tryCatch({
-          spatialreg::errorsarlm(as.formula(formula_str), data = data, listw = listw, Durbin = FALSE)
-        }, error = function(e) NULL)
-        
-        if (!is.null(test_model)) {
-          test_aic <- AIC(test_model)
-          if (test_aic < best_aic) {
-            best_aic <- test_aic
-            best_vars <- test_vars
-            var_to_remove <- var
-            improved <- TRUE
-          }
-        }
-      }
-      
-      if (improved) {
-        cat(sprintf("Iteration %d: Removed '%s', AIC improved from %.2f to %.2f\n", 
-                    iteration, var_to_remove, current_aic, best_aic))
-        current_vars <- best_vars
-        current_aic <- best_aic
-        formula_str <- paste(y_var, "~", paste(current_vars, collapse = " + "))
-        current_model <- spatialreg::errorsarlm(as.formula(formula_str), data = data, listw = listw, Durbin = FALSE)
-        iteration <- iteration + 1
-      }
-    }
-    
-    cat(sprintf("\nFinal model: %d variables, AIC = %.2f\n", length(current_vars), current_aic))
-    cat("Selected variables:\n")
-    cat(paste(current_vars, collapse = ", "), "\n")
-    
-    return(list(model = current_model, variables = current_vars, aic = current_aic))
-    
-  } else if (direction == "forward") {
-    # Start with null model (intercept only)
-    current_vars <- c()
-    remaining_vars <- predictor_vars
-    formula_str <- paste(y_var, "~ 1")
-    current_model <- spatialreg::errorsarlm(as.formula(formula_str), data = data, listw = listw, Durbin = FALSE)
-    current_aic <- AIC(current_model)
-    
-    cat("\n=== FORWARD STEPWISE SELECTION ===\n")
-    cat(sprintf("Starting model AIC: %.2f with 0 variables\n", current_aic))
-    
-    improved <- TRUE
-    iteration <- 1
-    
-    while (improved && length(remaining_vars) > 0) {
-      improved <- FALSE
-      best_aic <- current_aic
-      best_vars <- current_vars
-      var_to_add <- NULL
-      
-      # Try adding each remaining variable
-      for (var in remaining_vars) {
-        test_vars <- c(current_vars, var)
-        formula_str <- paste(y_var, "~", paste(test_vars, collapse = " + "))
-        test_model <- tryCatch({
-          spatialreg::errorsarlm(as.formula(formula_str), data = data, listw = listw, Durbin = FALSE)
-        }, error = function(e) NULL)
-        
-        if (!is.null(test_model)) {
-          test_aic <- AIC(test_model)
-          if (test_aic < best_aic) {
-            best_aic <- test_aic
-            best_vars <- test_vars
-            var_to_add <- var
-            improved <- TRUE
-          }
-        }
-      }
-      
-      if (improved) {
-        cat(sprintf("Iteration %d: Added '%s', AIC improved from %.2f to %.2f\n", 
-                    iteration, var_to_add, current_aic, best_aic))
-        current_vars <- best_vars
-        remaining_vars <- setdiff(remaining_vars, var_to_add)
-        current_aic <- best_aic
-        formula_str <- paste(y_var, "~", paste(current_vars, collapse = " + "))
-        current_model <- spatialreg::errorsarlm(as.formula(formula_str), data = data, listw = listw, Durbin = FALSE)
-        iteration <- iteration + 1
-      }
-    }
-    
-    cat(sprintf("\nFinal model: %d variables, AIC = %.2f\n", length(current_vars), current_aic))
-    cat("Selected variables:\n")
-    cat(paste(current_vars, collapse = ", "), "\n")
-    
-    return(list(model = current_model, variables = current_vars, aic = current_aic))
-  }
-}
-
-# Run forward stepwise selection
-stepwise_result <- stepwise_spatial(
-  y_var = "PC1",
-  predictor_vars = predictor_vars,
-  data = joined_data_pca_sf,
-  listw = lw,
-  direction = "forward"
-)
-
-# Extract the final CAR/spatial error model
-sem_fit <- stepwise_result$model
-selected_vars <- stepwise_result$variables
-
-# Print summary of final model
-cat("\n=== FINAL CAR MODEL SUMMARY ===\n")
-sem_fit_df <- broom::tidy(sem_fit)
-print(sem_fit_df)
-
-# Also fit the full model for comparison
 formula_str_full <- paste("PC1 ~", paste(predictor_vars, collapse = " + "))
-sem_fit_full <- spatialreg::errorsarlm(
+
+subset_result <- spatialreg::errorsarlm(
   as.formula(formula_str_full),
   data = joined_data_pca_sf,
   listw = lw,
   Durbin = FALSE
 )
-cat(sprintf("\nFull model AIC: %.2f\n", AIC(sem_fit_full)))
-cat(sprintf("Selected model AIC: %.2f\n", AIC(sem_fit)))
-cat(sprintf("AIC improvement: %.2f\n", AIC(sem_fit_full) - AIC(sem_fit)))
 
-# plot spatial lag
-joined_data_sf$sp_lag <- spdep::lag.listw(lw, joined_data_sf$pct_asian)
-joined_data_sf |> ggplot(aes(fill=sp_lag, geometry = geometry))+
-  geom_sf(aes(fill = sp_lag), color = "white", size = 0.1) +
-  scale_fill_gradient2(
-    low = "#2166ac",
-    mid = "#f7f7f7",
-    high = "#b2182b",
-    midpoint = 10,
-    name = "Spatial Lag of Frey Share (%)",
-    limits = c(0, 20),
-    na.value = "grey80"
-    ) +
-  labs(
-    title = "Spatial Lag of Frey Share by Census Tract",
-    subtitle = "Minneapolis, MN (Elections 2017, 2021, 2025)"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid = element_blank()
-  )
+# print summary of model
+print(summary(subset_result))
 
 # plot spatial residuals
-joined_data_pca_sf$sp_resids <- sem_fit$residuals
-joined_data_pca_sf |> ggplot(aes(fill = sp_resids, geometry = geometry))+
-  geom_sf(aes(fill = sp_resids), color = "white", size = 0.1) +
-  scale_fill_gradient2(
-    low = "#2166ac",
-    mid = "#f7f7f7",
-    high = "#b2182b",
-    midpoint = 0,
-    name = "Spatial Residuals",
-    limits = c(-5, 5),
-    na.value = "grey80"
-  ) +
-  labs(
-    title = "Spatial Error Model Residuals (PC1) by Census Tract",
-    subtitle = "Minneapolis, MN - CAR Model"
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    panel.grid = element_blank()
-  )
+joined_data_pca_sf$sp_resids <- subset_result$residuals
+pca_map_plot(joined_data_pca_sf, "sp_resids", "Spatial Residuals (PC1)")
+
+# calculate Moran's I for spatial residuals
+moran_test_residuals <- moran.test(joined_data_pca_sf$sp_resids, lw)
+print(moran_test_residuals)
+
+# use census PCA as predictor in spatial error model
+predictor_vars_census <- c("census_PC1", "census_PC2", "census_PC3", "census_PC4", "census_PC5", "census_PC6", "census_PC7", "census_PC8", "census_PC9", "census_PC10")
+
+formula_str_census <- paste("PC1 ~", paste(predictor_vars_census, collapse = " + "))
+
+subset_result_census <- spatialreg::errorsarlm(
+  as.formula(formula_str_census),
+  data = joined_data_pca_sf,
+  listw = lw,
+  Durbin = FALSE
+)
+
+# print summary of model
+print(summary(subset_result_census))
+
+# plot spatial residuals by census PCA
+joined_data_pca_sf$sp_resids_census <- subset_result_census$residuals
+pca_map_plot(joined_data_pca_sf, "sp_resids_census", "Census PCA (PC1)")
+
+# plot PCA by tract using mapview
+# ensure object is sf class for mapview
+if (!inherits(joined_data_pca_sf, "sf")) {
+  joined_data_pca_sf <- st_as_sf(joined_data_pca_sf)
+}
+# create color palette matching pca_map_plot (blue-white-red diverging)
+pca_color_palette <- colorRampPalette(c("#2166ac", "#f7f7f7", "#b2182b"))
+mapview(joined_data_pca_sf, zcol = "PC1", col.regions = pca_color_palette(100))
