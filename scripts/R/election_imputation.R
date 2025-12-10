@@ -9,7 +9,7 @@ library(tidyverse)
 library(sf)
 library(tidycensus)
 
-setwd("~/Library/CloudStorage/Box-Box/DSAN-6750/Minneapolis")
+setwd("~/Library/CloudStorage/Box-Box/DSAN-6750/Minneapolis/scripts/")
 
 # Note: You need a Census API key for tidycensus
 # Get one at: https://api.census.gov/data/key_signup.html
@@ -678,10 +678,209 @@ if (exists("block_results_combined")) {
 }
 
 # -----------------------------------------------------------------------------
-# Step 11: Create Tract Shapefile
+# Step 11: Interpolate Frey Final Round Vote Shares from Precincts to Tracts
 # -----------------------------------------------------------------------------
 
-cat("\n=== Step 10: Creating Tract Shapefile ===\n")
+cat("\n=== Step 11: Interpolating Frey Final Round Vote Shares ===\n")
+
+# Read the three precinct shapefiles created by moran_lisa.R
+frey_precinct_files <- c(
+  "../data/shapefiles/precincts/frey_dehn_2017.shp",
+  "../data/shapefiles/precincts/frey_knuth_2021.shp",
+  "../data/shapefiles/precincts/frey_fateh_2025.shp"
+)
+
+frey_election_years <- c(2017, 2021, 2025)
+frey_tract_results <- tibble(tract_geoid = mpls_tract_codes)
+
+# Process each final round election
+for (i in seq_along(frey_precinct_files)) {
+  year <- frey_election_years[i]
+  precinct_file <- frey_precinct_files[i]
+  
+  cat("  Processing", year, "final round election...\n")
+  
+  # Check if file exists
+  if (!file.exists(precinct_file)) {
+    cat("    Warning: File", precinct_file, "not found, skipping\n")
+    next
+  }
+  
+  # Read precinct shapefile
+  precinct_sf <- st_read(precinct_file, quiet = TRUE) |>
+    st_transform(26915) |>
+    st_make_valid()
+  
+  # Check available column names (shapefiles truncate to 10 chars)
+  cat("    Available columns:", paste(names(precinct_sf)[!names(precinct_sf) %in% c("geometry")], collapse = ", "), "\n")
+  
+  # Handle column name variations (shapefile truncation or original names)
+  # Try to find Frey votes column (could be Frey_votes, Fry_vts, Jacob_Fr, etc.)
+  frey_col <- NULL
+  if ("Frey_votes" %in% names(precinct_sf)) {
+    frey_col <- "Frey_votes"
+  } else if ("Fry_vts" %in% names(precinct_sf)) {
+    frey_col <- "Fry_vts"
+  } else if ("Jacob_Fr" %in% names(precinct_sf)) {
+    frey_col <- "Jacob_Fr"
+  } else if (any(grepl("Frey|frey|Fry|fry", names(precinct_sf)))) {
+    frey_col <- names(precinct_sf)[grepl("Frey|frey|Fry|fry", names(precinct_sf))][1]
+  }
+  
+  if (is.null(frey_col)) {
+    cat("    Error: Could not find Frey votes column in shapefile\n")
+    next
+  }
+  
+  cat("    Using Frey votes column:", frey_col, "\n")
+  
+  # Find opponent votes column
+  opp_col <- NULL
+  if ("Opp_votes" %in% names(precinct_sf)) {
+    opp_col <- "Opp_votes"
+  } else if ("Opp_vts" %in% names(precinct_sf)) {
+    opp_col <- "Opp_vts"
+  } else if (any(grepl("Opp|opp", names(precinct_sf)))) {
+    opp_col <- names(precinct_sf)[grepl("Opp|opp", names(precinct_sf))][1]
+  }
+  
+  # Find valid votes column
+  valid_col <- NULL
+  if ("Valid_votes" %in% names(precinct_sf)) {
+    valid_col <- "Valid_votes"
+  } else if ("Vld_vts" %in% names(precinct_sf)) {
+    valid_col <- "Vld_vts"
+  } else if (any(grepl("Valid|valid|Vld|vld", names(precinct_sf)))) {
+    valid_col <- names(precinct_sf)[grepl("Valid|valid|Vld|vld", names(precinct_sf))][1]
+  }
+  
+  # Calculate total votes from Frey votes and opponent votes
+  # We need to reconstruct vote counts for interpolation
+  precinct_sf <- precinct_sf |>
+    mutate(
+      Frey_votes = .data[[frey_col]]
+    )
+  
+  # Calculate Total_votes
+  if (!is.null(valid_col)) {
+    precinct_sf <- precinct_sf |>
+      mutate(Total_votes = .data[[valid_col]])
+    cat("    Using valid votes column:", valid_col, "\n")
+  } else if (!is.null(opp_col)) {
+    precinct_sf <- precinct_sf |>
+      mutate(Total_votes = Frey_votes + .data[[opp_col]])
+    cat("    Calculating total votes from Frey + Opponent votes\n")
+  } else {
+    cat("    Error: Could not find valid votes or opponent votes column\n")
+    next
+  }
+  
+  # Check if we have valid total votes
+  if (all(is.na(precinct_sf$Total_votes)) || all(precinct_sf$Total_votes == 0)) {
+    cat("    Error: Could not calculate total votes\n")
+    next
+  }
+  
+  cat("    Loaded", nrow(precinct_sf), "precincts\n")
+  cat("    Total votes:", format(sum(precinct_sf$Total_votes, na.rm = TRUE), big.mark = ","), "\n")
+  
+  # Interpolate Frey votes to blocks
+  block_frey <- tryCatch({
+    interpolate_to_blocks(
+      precinct_sf,
+      blocks_mpls,
+      "Frey_votes"
+    )
+  }, error = function(e) {
+    cat("    Error interpolating Frey votes:", e$message, "\n")
+    return(NULL)
+  })
+  
+  if (is.null(block_frey)) next
+  
+  # Interpolate total votes to blocks
+  block_total <- tryCatch({
+    interpolate_to_blocks(
+      precinct_sf,
+      blocks_mpls,
+      "Total_votes"
+    )
+  }, error = function(e) {
+    cat("    Error interpolating total votes:", e$message, "\n")
+    return(NULL)
+  })
+  
+  if (is.null(block_total)) next
+  
+  # Combine and calculate vote share at block level
+  block_results <- block_frey |>
+    rename(Frey_votes = votes) |>
+    left_join(
+      block_total |> select(GEOID, Total_votes = votes),
+      by = "GEOID"
+    ) |>
+    mutate(
+      Frey_votes = if_else(is.na(Frey_votes), 0, Frey_votes),
+      Total_votes = if_else(is.na(Total_votes), 0, Total_votes),
+      Frey_share = if_else(
+        Total_votes > 0,
+        (Frey_votes / Total_votes) * 100,
+        0
+      )
+    )
+  
+  # Aggregate to tracts (weighted by population)
+  tract_results <- block_results |>
+    group_by(tract_geoid) |>
+    summarise(
+      pop2020 = sum(pop2020, na.rm = TRUE),
+      Frey_votes = sum(Frey_votes, na.rm = TRUE),
+      Total_votes = sum(Total_votes, na.rm = TRUE),
+      .groups = "drop"
+    ) |>
+    mutate(
+      frey_share = if_else(
+        Total_votes > 0,
+        (Frey_votes / Total_votes) * 100,
+        NA_real_
+      )
+    ) |>
+    select(tract_geoid, frey_share)
+  
+  # Add to results with year suffix
+  col_name <- paste0("frey_share_", year)
+  frey_tract_results <- frey_tract_results |>
+    left_join(
+      tract_results |> rename(!!col_name := frey_share),
+      by = "tract_geoid"
+    )
+  
+  cat("    Imputed to", nrow(tract_results), "tracts\n")
+  cat("    Average Frey share:", round(mean(tract_results$frey_share, na.rm = TRUE), 2), "%\n")
+}
+
+# Calculate average vote share across all three elections
+# Use cbind to create a matrix for rowMeans
+frey_tract_results <- frey_tract_results |>
+  mutate(
+    frey_share_avg = rowMeans(
+      cbind(
+        frey_share_2017,
+        frey_share_2021,
+        frey_share_2025
+      ),
+      na.rm = TRUE
+    )
+  )
+
+cat("  Calculated average Frey vote share across all three elections\n")
+cat("  Average across all tracts:", round(mean(frey_tract_results$frey_share_avg, na.rm = TRUE), 2), "%\n")
+
+# -----------------------------------------------------------------------------
+# Step 12: Create Tract Shapefile
+# -----------------------------------------------------------------------------
+
+cat("\n=== Step 12: Creating Tract Shapefile ===\n")
 
 # Load Minnesota tract shapefile
 mn_tracts <- st_read("../data/raw/tracts/minnesota_tracts/tl_2024_27_tract.shp", quiet = TRUE) |>
@@ -704,11 +903,24 @@ st_write(tract_sf |> select(1:30), "../data/shapefiles/tracts/mpls_tract_all_ele
          delete_layer = TRUE, quiet = TRUE)
 cat("  Saved: ../data/shapefiles/tracts/mpls_tract_all_elections.shp\n")
 
+# Create Frey vote share shapefile
+frey_tract_sf <- mn_tracts |>
+  left_join(frey_tract_results, by = "tract_geoid")
+
+# Save as GeoPackage
+st_write(frey_tract_sf, "../data/geopackages/mpls_tract_frey_votes.gpkg", delete_dsn = TRUE, quiet = TRUE)
+cat("  Saved: ../data/geopackages/mpls_tract_frey_votes.gpkg\n")
+
+# Save as shapefile
+st_write(frey_tract_sf, "../data/shapefiles/tracts/mpls_tract_frey_votes.shp", 
+         delete_layer = TRUE, quiet = TRUE)
+cat("  Saved: ../data/shapefiles/tracts/mpls_tract_frey_votes.shp\n")
+
 # -----------------------------------------------------------------------------
-# Step 12: Summary Statistics
+# Step 13: Summary Statistics
 # -----------------------------------------------------------------------------
 
-cat("\n=== Summary Statistics ===\n\n")
+cat("\n=== Step 13: Summary Statistics ===\n\n")
 
 # Print summary of processed elections
 summary_stats <- election_config |>
@@ -732,3 +944,5 @@ cat("  - ../data/processed/election_results/tract_election_results_all.csv (all 
 cat("  - ../data/processed/election_results/block_election_results_all.csv (all elections at block level)\n")
 cat("  - ../data/geopackages/mpls_tract_all_elections.gpkg (GeoPackage with all data)\n")
 cat("  - ../data/shapefiles/tracts/mpls_tract_all_elections.shp\n")
+cat("  - ../data/geopackages/mpls_tract_frey_votes.gpkg (GeoPackage with Frey vote shares)\n")
+cat("  - ../data/shapefiles/tracts/mpls_tract_frey_votes.shp (Frey final round vote shares by tract)\n")

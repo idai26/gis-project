@@ -3,7 +3,7 @@ library(tidyverse)
 library(sf)
 library(spdep)
 
-setwd("~/Library/CloudStorage/Box-Box/DSAN-6750/Minneapolis")
+setwd("~/Library/CloudStorage/Box-Box/DSAN-6750/Minneapolis/scripts/")
 
 # function to normalize precinct names
 normalize_precinct_name <- function(name) {
@@ -207,6 +207,53 @@ for (i in seq_len(nrow(election_results))) {
     dpi = 300
   )
 }
+
+# Create shapefiles directory if it doesn't exist
+if (!dir.exists("../data/shapefiles/precincts")) {
+  dir.create("../data/shapefiles/precincts", recursive = TRUE)
+}
+
+# Save shapefiles for each final round election
+for (i in seq_len(nrow(election_results))) {
+  year <- election_results$year[i]
+  opponent_name <- election_results$opponent_name[i]
+  spatial_data <- election_results$spatial_data[[i]]
+  opponent_col <- election_config$opponent_col[i]
+  
+  # Create filename based on year and opponent
+  filename_base <- paste0("frey_", tolower(opponent_name), "_", year)
+  shapefile_path <- paste0("../data/shapefiles/precincts/", filename_base, ".shp")
+  
+  # Select relevant columns and save
+  # Use short column names to avoid shapefile 10-character truncation
+  spatial_data_to_save <- spatial_data |>
+    select(
+      Precinct,
+      Frey_votes = `Jacob Frey_votes`,
+      Opp_votes = all_of(opponent_col),
+      Valid_votes,
+      Frey_share,
+      lisa_I,
+      lisa_p,
+      lisa_z,
+      frey_mean,
+      frey_lag,
+      frey_hl,
+      lag_hl,
+      significant,
+      lisa_cluster,
+      geometry
+    )
+  
+  # Save shapefile
+  st_write(spatial_data_to_save, shapefile_path, delete_layer = TRUE, quiet = TRUE)
+  cat("  Saved:", shapefile_path, "\n")
+}
+
+cat("\n=== Precinct Shapefiles Saved ===\n")
+cat("  - ../data/shapefiles/precincts/frey_dehn_2017.shp\n")
+cat("  - ../data/shapefiles/precincts/frey_knuth_2021.shp\n")
+cat("  - ../data/shapefiles/precincts/frey_fateh_2025.shp\n")
 
 # Access individual results if needed:
 # sf_2017 <- election_results$spatial_data[[1]]
