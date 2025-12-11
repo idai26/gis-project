@@ -1,0 +1,21 @@
+---
+title: "Results"
+---
+
+## Results
+
+### Key Findings
+
+[Add key findings here]
+
+### Visualizations
+
+[Add visualizations and plots here]
+
+### Model Comparisons
+
+[Add model comparison results here]
+
+### Spatial Patterns
+
+[Describe spatial patterns identified in the analysis]

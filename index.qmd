@@ -1,0 +1,26 @@
+---
+title: "Home"
+---
+
+## Minneapolis Spatial Analysis
+
+Welcome to the Minneapolis Spatial Analysis project website.
+
+This project examines spatial patterns and relationships in Minneapolis using advanced spatial regression techniques.
+
+### Project Overview
+
+This website documents the analysis of spatial data in Minneapolis, including:
+
+- Spatial regression modeling
+- Principal components analysis
+- Local Indicators of Spatial Association (LISA)
+- Election data analysis
+
+### Navigation
+
+Use the navigation menu above to explore different sections of the project:
+
+- **About**: Project description and background
+- **Methods**: Methodology and analytical approach
+- **Results**: Findings and visualizations
