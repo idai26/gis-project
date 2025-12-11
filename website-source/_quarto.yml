@@ -11,8 +11,10 @@ website:
         text: About
       - href: methods.qmd
         text: Methods
-      - href: results.qmd
-        text: Results
+      - href: spatial_regression.qmd
+        text: Spatial Regression
+      - href: moran_lisa.qmd
+        text: Moran's I and LISA
 
 format:
   html:
