@@ -53,44 +53,21 @@ joined_data_sf <- census_data_pct |>
 nb <- poly2nb(joined_data_sf$geometry)
 lw <- nb2listw(nb, style = "W", zero.policy = TRUE)
 
-# ============================================================================
-# PRINCIPAL COMPONENTS ANALYSIS (Census Only)
-# ============================================================================
+# Define predictor variables
 
-# Census variables PCA
-pca_census <- census_data_pct |>
-  select(-c(1:10)) |>
-  prcomp(scale. = TRUE)
-
-factor_loadings_census <- pca_census$rotation |>
-  as.data.frame() |>
-  mutate(variable = rownames(pca_census$rotation)) |>
-  arrange(PC1)
-
-# Join census PCA results to main dataset
-# Create census PCA results as regular data frame
-census_pca_results <- census_data_pct |>
-  select(GEOID) |>
-  bind_cols(as.data.frame(pca_census$x)) |>
-  rename_with(~ paste0("census_", .x), starts_with("PC"))
-
-# Join census PCA to main dataset
-joined_data_pca_sf <- joined_data_sf |>
-  left_join(census_pca_results, by = "GEOID") |>
-  st_as_sf()
-
-cat("\n=== Using Frey Average Vote Share as Dependent Variable ===\n")
-cat("Variable: fry_sh_ (average across 2017, 2021, 2025 final rounds)\n")
-cat("Range: [", round(min(joined_data_pca_sf$fry_sh_, na.rm = TRUE), 2), 
-    ", ", round(max(joined_data_pca_sf$fry_sh_, na.rm = TRUE), 2), "]\n")
-cat("Mean: ", round(mean(joined_data_pca_sf$fry_sh_, na.rm = TRUE), 2), "%\n\n")
+predictor_vars <- c(
+  "pct_white", "pct_bachelors_plus", "med_hh_income", "pct_higher_ed", "pct_english_only",
+  "pct_owner_occupied", "pct_rent_burdened", "pct_built_post2000", "pct_multifamily",
+  "pct_moved_2021_later", "pct_same_sex_hh",
+  "pct_age_18_34", "pct_age_65_plus", "unemployment_rate"
+)
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
 # Map plotting function
-map_plot <- function(data, variable, title = NULL) {
+map_plot <- function(data, variable, title = NULL, subtitle = title) {
   ggplot(data, aes(fill = !!sym(variable), geometry = geometry)) +
     geom_sf(color = "white", size = 0.1) +
     scale_fill_gradient2(
@@ -100,7 +77,7 @@ map_plot <- function(data, variable, title = NULL) {
     ) +
     labs(
       title = paste0(title, " by Census Tract"),
-      fill = title
+      fill = subtitle
     ) +
     theme_minimal() +
     theme(
@@ -150,63 +127,190 @@ calculate_percentages <- function(data) {
     )
 }
 
+# Calculate descriptive statistics and Moran's I for a variable
+calculate_var_stats <- function(var_name, data, listw) {
+  var_values <- data[[var_name]]
+  
+  # Calculate descriptive statistics
+  mean_val <- mean(var_values, na.rm = TRUE)
+  median_val <- median(var_values, na.rm = TRUE)
+  min_val <- min(var_values, na.rm = TRUE)
+  max_val <- max(var_values, na.rm = TRUE)
+  sd_val <- sd(var_values, na.rm = TRUE)
+  
+  # Calculate Moran's I
+  moran_result <- moran.test(var_values, listw)
+  moran_i <- moran_result$estimate[1]
+  moran_p <- moran_result$p.value
+  
+  # Return as data frame row
+  data.frame(
+    Variable = var_name,
+    Mean = mean_val,
+    Median = median_val,
+    Min = min_val,
+    Max = max_val,
+    SD = sd_val,
+    Moran_I = moran_i,
+    Moran_I_Pvalue = moran_p,
+    stringsAsFactors = FALSE
+  )
+}
+
 # ============================================================================
 # EXPLORATORY ANALYSIS
 # ============================================================================
 
 # Plot Frey average vote share map
-map_plot(joined_data_sf, "fry_sh_", "Frey Average Vote Share")
+map_plot(joined_data_sf, "fry_sh_", title = "Frey Average Vote Share", subtitle = "Avg. Share")
 mapview_map_plot(joined_data_sf, "fry_sh_", "Frey Average Vote Share")
 
 
 # Calculate Moran's I for Frey Average Vote Share
-moran_test_frey <- moran.test(joined_data_pca_sf$fry_sh_, lw)
+moran_test_frey <- moran.test(joined_data_sf$fry_sh_, lw)
 print(moran_test_frey)
+
+# ============================================================================
+# VARIABLE DESCRIPTIVE STATISTICS AND SPATIAL AUTOCORRELATION
+# ============================================================================
+
+# Dependent Variable Statistics
+cat("\n")
+cat("=", strrep("=", 78), "\n", sep = "")
+cat("DEPENDENT VARIABLE: DESCRIPTIVE STATISTICS AND SPATIAL AUTOCORRELATION\n")
+cat("=", strrep("=", 78), "\n", sep = "")
+
+dep_var_stats <- calculate_var_stats("fry_sh_", joined_data_sf, lw)
+cat("Variable: fry_sh_ (Frey Average Vote Share)\n")
+cat("  Mean:   ", sprintf("%.4f", dep_var_stats$Mean), "\n", sep = "")
+cat("  Median: ", sprintf("%.4f", dep_var_stats$Median), "\n", sep = "")
+cat("  Min:    ", sprintf("%.4f", dep_var_stats$Min), "\n", sep = "")
+cat("  Max:    ", sprintf("%.4f", dep_var_stats$Max), "\n", sep = "")
+cat("  SD:     ", sprintf("%.4f", dep_var_stats$SD), "\n", sep = "")
+cat("  Moran's I: ", sprintf("%.4f", dep_var_stats$Moran_I), " (p-value: ", 
+    format.pval(dep_var_stats$Moran_I_Pvalue, digits = 4), ")\n", sep = "")
+cat("\n")
+
+# Predictor Variables Statistics
+cat("=", strrep("=", 78), "\n", sep = "")
+cat("PREDICTOR VARIABLES: DESCRIPTIVE STATISTICS AND SPATIAL AUTOCORRELATION\n")
+cat("=", strrep("=", 78), "\n", sep = "")
+
+# Calculate statistics for all predictor variables
+predictor_stats_list <- lapply(predictor_vars, function(var) {
+  calculate_var_stats(var, joined_data_sf, lw)
+})
+predictor_stats_table <- do.call(rbind, predictor_stats_list)
+
+# Print the table
+print(predictor_stats_table, digits = 4, row.names = FALSE)
+cat("\n")
+
+# Save statistics tables to CSV files
+write_csv(dep_var_stats, "../outputs/spatial_regression_dependent_var_stats.csv")
+write_csv(predictor_stats_table, "../outputs/spatial_regression_predictor_vars_stats.csv")
+cat("Statistics tables saved to outputs/ directory:\n")
+cat("  - spatial_regression_dependent_var_stats.csv\n")
+cat("  - spatial_regression_predictor_vars_stats.csv\n\n")
 
 # ============================================================================
 # SPATIAL REGRESSION MODELS
 # ============================================================================
 
-# Define predictor variables
-
-predictor_vars <- c(
-  "pct_white", "pct_bachelors_plus", "med_hh_income", "pct_higher_ed", "pct_english_only",
-  "pct_owner_occupied", "pct_wfh", "pct_transit", "pct_drive_alone",
-  "pct_rent_burdened", "pct_built_post2000", "pct_multifamily",
-  "pct_moved_2021_later", "pct_same_sex_hh",
-  "pct_age_18_34", "pct_age_65_plus", "unemployment_rate"
-)
-
-predictor_vars_census <- paste0("census_PC", 1:10)
-
 # Linear Regression (OLS)
 formula_linear <- as.formula(paste("fry_sh_ ~", paste(predictor_vars, collapse = " + ")))
-model_linear <- lm(formula_linear, data = joined_data_pca_sf)
+model_linear <- lm(formula_linear, data = joined_data_sf)
 print(summary(model_linear))
 
-joined_data_pca_sf$linear_resids <- model_linear$residuals
-map_plot(joined_data_pca_sf, "linear_resids", "Linear Regression Residuals (Frey Average Vote Share)")
+# Extract and save OLS model summary
+linear_summary <- summary(model_linear)
 
-moran_test_linear_resids <- moran.test(joined_data_pca_sf$linear_resids, lw)
+# Extract coefficients
+ols_coefficients <- as.data.frame(linear_summary$coefficients)
+ols_coefficients$Variable <- rownames(ols_coefficients)
+ols_coefficients <- ols_coefficients |>
+  select(Variable, Estimate, `Std. Error`, `t value`, `Pr(>|t|)`) |>
+  rename(
+    StdError = `Std. Error`,
+    TValue = `t value`,
+    PValue = `Pr(>|t|)`
+  )
+
+# Extract fit statistics
+ols_fit_stats <- data.frame(
+  Statistic = c("R-squared", "Adjusted R-squared", "F-statistic", "F p-value", "AIC", "BIC", "Residual SE"),
+  Value = c(
+    linear_summary$r.squared,
+    linear_summary$adj.r.squared,
+    linear_summary$fstatistic[1],
+    pf(linear_summary$fstatistic[1], linear_summary$fstatistic[2], linear_summary$fstatistic[3], lower.tail = FALSE),
+    AIC(model_linear),
+    BIC(model_linear),
+    linear_summary$sigma
+  )
+)
+
+# Save to CSV
+write_csv(ols_coefficients, "../outputs/spatial_regression_ols_coefficients.csv")
+write_csv(ols_fit_stats, "../outputs/spatial_regression_ols_fit_stats.csv")
+cat("OLS model summaries saved to outputs/ directory:\n")
+cat("  - spatial_regression_ols_coefficients.csv\n")
+cat("  - spatial_regression_ols_fit_stats.csv\n\n")
+
+joined_data_sf$linear_resids <- model_linear$residuals
+map_plot(joined_data_sf, "linear_resids", "Linear Regression Residuals\n (Frey Average Vote Share)", "Residual")
+
+moran_test_linear_resids <- moran.test(joined_data_sf$linear_resids, lw)
 print(moran_test_linear_resids)
 
 # SAR Model with Raw Census Variables
-model_sar <- errorsarlm(formula_linear, data = joined_data_pca_sf, listw = lw, Durbin = FALSE)
+model_sar <- errorsarlm(formula_linear, data = joined_data_sf, listw = lw, Durbin = FALSE)
 print(summary(model_sar))
 
-joined_data_pca_sf$sp_resids <- model_sar$residuals
-map_plot(joined_data_pca_sf, "sp_resids", "Spatial Autoregressive Residuals (Frey Average Vote Share)")
+# Extract and save SAR model summary
+sar_summary <- summary(model_sar)
 
-moran_test_sar_resids <- moran.test(joined_data_pca_sf$sp_resids, lw)
+# Extract coefficients
+sar_coefficients <- as.data.frame(sar_summary$Coef)
+sar_coefficients$Variable <- rownames(sar_coefficients)
+sar_coefficients <- sar_coefficients |>
+  select(Variable, Estimate, `Std. Error`, `z value`, `Pr(>|z|)`) |>
+  rename(
+    StdError = `Std. Error`,
+    ZValue = `z value`,
+    PValue = `Pr(>|z|)`
+  )
+
+# Extract fit statistics including lambda
+# Calculate pseudo R-squared as correlation between fitted and observed values
+pseudo_r2 <- cor(model_sar$y, model_sar$fitted.values, use = "complete.obs")^2
+
+sar_fit_stats <- data.frame(
+  Statistic = c("Pseudo R-squared", "AIC", "BIC", "Log-likelihood", "Lambda", "Lambda Std Error", "Lambda z-value", "Lambda p-value"),
+  Value = c(
+    pseudo_r2,
+    AIC(model_sar),
+    BIC(model_sar),
+    as.numeric(logLik(model_sar)),
+    sar_summary$lambda,
+    sar_summary$lambda.se,
+    sar_summary$lambda / sar_summary$lambda.se,
+    2 * (1 - pnorm(abs(sar_summary$lambda / sar_summary$lambda.se)))
+  )
+)
+
+# Save to CSV
+write_csv(sar_coefficients, "../outputs/spatial_regression_sar_coefficients.csv")
+write_csv(sar_fit_stats, "../outputs/spatial_regression_sar_fit_stats.csv")
+cat("SAR model summaries saved to outputs/ directory:\n")
+cat("  - spatial_regression_sar_coefficients.csv\n")
+cat("  - spatial_regression_sar_fit_stats.csv\n\n")
+
+joined_data_sf$sp_resids <- model_sar$residuals
+map_plot(joined_data_sf, "sp_resids", "Spatial Autoregressive Residuals\n (Frey Average Vote Share)", "Residual")
+
+moran_test_sar_resids <- moran.test(joined_data_sf$sp_resids, lw)
 print(moran_test_sar_resids)
-
-# SAR Model with Census PCA
-formula_census <- as.formula(paste("fry_sh_ ~", paste(predictor_vars_census, collapse = " + ")))
-model_sar_census <- errorsarlm(formula_census, data = joined_data_pca_sf, listw = lw, Durbin = FALSE)
-print(summary(model_sar_census))
-
-joined_data_pca_sf$sp_resids_census <- model_sar_census$residuals
-map_plot(joined_data_pca_sf, "sp_resids_census", "Spatial Autoregressive Residuals w/ Census PCA (Frey Average Vote Share)")
 
 # ============================================================================
 # MODEL COMPARISON: Accuracy Measures
@@ -249,22 +353,17 @@ extract_model_metrics <- function(model, moran_test, model_type = "linear") {
 # Extract metrics for all models
 metrics_linear <- extract_model_metrics(model_linear, moran_test_linear_resids, "linear")
 metrics_sar <- extract_model_metrics(model_sar, moran_test_sar_resids, "sar")
-metrics_sar_census <- extract_model_metrics(
-  model_sar_census,
-  moran.test(model_sar_census$residuals, lw),
-  "sar"
-)
 
 # Create comparison table
 model_comparison <- data.frame(
-  Model = c("Linear (OLS)", "SAR (Raw Census)", "SAR (PCA)"),
-  AIC = c(metrics_linear$aic, metrics_sar$aic, metrics_sar_census$aic),
-  BIC = c(metrics_linear$bic, metrics_sar$bic, metrics_sar_census$bic),
-  RMSE = c(metrics_linear$rmse, metrics_sar$rmse, metrics_sar_census$rmse),
-  MAE = c(metrics_linear$mae, metrics_sar$mae, metrics_sar_census$mae),
-  Lambda = c(NA, metrics_sar$lambda, metrics_sar_census$lambda),
-  Moran_I_Residuals = c(metrics_linear$moran_i, metrics_sar$moran_i, metrics_sar_census$moran_i),
-  Moran_I_Pvalue = c(metrics_linear$moran_p, metrics_sar$moran_p, metrics_sar_census$moran_p)
+  Model = c("Linear (OLS)", "Spatial Autoregressive (SAR)"),
+  AIC = c(metrics_linear$aic, metrics_sar$aic),
+  BIC = c(metrics_linear$bic, metrics_sar$bic),
+  RMSE = c(metrics_linear$rmse, metrics_sar$rmse),
+  MAE = c(metrics_linear$mae, metrics_sar$mae),
+  Lambda = c(NA, metrics_sar$lambda),
+  Moran_I_Residuals = c(metrics_linear$moran_i, metrics_sar$moran_i),
+  Moran_I_Pvalue = c(metrics_linear$moran_p, metrics_sar$moran_p)
 )
 
 # Print comparison

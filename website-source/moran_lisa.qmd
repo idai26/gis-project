@@ -91,7 +91,7 @@ for (yr in c(2017, 2021, 2025)) {
   year_data <- all_summaries |>
     filter(year == yr) |>
     select(-year) |>
-    mutate(across(where(is.numeric), ~ round(.x, 1))) |>
+    mutate(across(where(is.numeric), ~ round(.x, 1) |> prettyNum(big.mark = ","))) |>
     select(
       `Cluster Type` = cluster_type,
       `N Precincts` = n_precincts,

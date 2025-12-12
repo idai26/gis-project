@@ -1,6 +1,8 @@
 ---
 title: "Spatial Regression"
 ---
+
+## Methodology
 The evidence of spatial clustering in Frey's vote share raises questions about the underlying factors that contribute to support or opposition to him. We can use spatial regression to model the relationship between Frey's average vote share in 2017, 2021, and 2025 and the demographic and socioeconomic characteristics of different census tracts.
 
 Ordinary Least Squares (OLS) regression is a common method for modeling the relationship between a dependent variable and one or more independent variables. In OLS regression, we assume that the relationship between the dependent variable and the independent variables is linear. The model takes the form
@@ -11,14 +13,331 @@ $$
 
 where $y$ is the dependent variable, $x_1, x_2, \ldots, x_n$ are the independent variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
 
-In spatial regression, we account for the spatial autocorrelation of the error term. When there is spatial clustering in the error term (as diagnosed by calculating Moran's I of the residuals of an OLS regression), we will systematically underestimated the standard errors of regression coefficients. Thus, we need to use a spatial error model to account for the spatial autocorrelation of the error term.
+In spatial regression, we account for the spatial autocorrelation of the error term. When there is spatial clustering in the error term (as diagnosed by calculating Moran's I of the residuals of an OLS regression), we will systematically underestimate the standard errors of regression coefficients. Thus, we need to use a spatial error model to account for the spatial autocorrelation of the error term.
 
-When we are most interested in the relatinship between the dependent variable and the independent variables, we use a spatial error model (SEM). The model takes the form:
+When we are most interested in the relationship between the dependent variable and the independent variables, we use a spatial error model (SEM). The SEM model takes the form:
 
 $$
-y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \lambda W y + \epsilon
+y = X\beta + u
 $$
 
-where $\lambda$ is the spatial autoregressive parameter, $W$ is the spatial weight matrix, and $\epsilon$ is the error term.
+$$
+u = \lambda W u + \epsilon
+$$
 
-The spatial weight matrix $W$ is a matrix of weights for the neighboring units. In our case, we use the Queen contiguity weight matrix, which is a binary matrix that is 1 if the units are neighbors and 0 otherwise, defined by the adjacency of the units' polygons (including corners touching).
+where $y$ is the dependent variable, $u$ is the spatial error term, $\lambda$ is the spatial autoregressive parameter, $W$ is the spatial weight matrix, and $\epsilon$ is the "white noise" error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
+
+The spatial weight matrix $W$ is a matrix of weights for the neighboring units. In our case, we use the Queen contiguity weight matrix, which is a binary matrix that is 1 if the units are neighbors and 0 otherwise, defined by the adjacency of the units' polygons (including corners touching). In particular, we use the row-standardized Queen contiguity weight matrix that is obtained by dividing each row of the binary Queen contiguity weight matrix by the sum of the row.
+
+## Dependent Variable: Frey's Average Vote Share
+To estimate support for Frey across the past three mayoral elections, we use the average of Frey's vote share in the final round of ranked choice voting (RCV) in 2017, 2021, and 2025. As a reminder, Frey received 57.2% of the vote in 2017, 56.2% of the vote in 2021, and 53.0% of the vote in 2025.
+
+### Jacob Frey Average Vote Share by Census Tract (2017-2025)
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+
+library(tidyverse)
+library(sf)
+library(mapview)
+
+# Load census data
+census_data_pct <- read_csv("../data/processed/census/mpls_tracts_census.csv", show_col_types = FALSE) |>
+  mutate(GEOID = as.character(GEOID)) |>
+  select(c(1:10, 91, contains("pct_"), unemployment_rate))
+
+# Load Frey vote share shapefile
+frey_data_sf <- read_sf("../data/shapefiles/tracts/mpls_tract_frey_votes.shp") |>
+  st_transform(26915)
+
+# Join data sources
+joined_data_sf <- census_data_pct |>
+  left_join(frey_data_sf, by = "GEOID") |>
+  st_as_sf()
+
+# Mapview plotting function
+mapview_map_plot <- function(data, variable, title = NULL) {
+  color_palette <- colorRampPalette(c("#2166ac", "#f7f7f7", "#b2182b"))
+  
+  # Create tooltip label with title and rounded value (1 decimal place)
+  label_values <- paste0(title, ": ", round(data[[variable]], 1))
+  
+  mapview(
+    data,
+    zcol = variable,
+    layer.name = title,
+    legend = TRUE,
+    col.regions = color_palette(100),
+    label = label_values
+  )
+}
+
+# Create and display interactive map
+mapview_map_plot(joined_data_sf, "fry_sh_", "Frey Average Vote Share")
+```
+
+### Descriptive Statistics and Spatial Autocorrelation: Jacob Frey Average Vote Share by Census Tract (2017-2025)
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Read dependent variable statistics
+dep_stats <- read_csv("../outputs/spatial_regression_dependent_var_stats.csv", show_col_types = FALSE)
+
+# Format and display the table
+dep_stats |>
+  select(
+    `Variable` = Variable,
+    `Mean` = Mean,
+    `Median` = Median,
+    `Min` = Min,
+    `Max` = Max,
+    `SD` = SD,
+    `Moran's I` = Moran_I,
+    `p-value` = Moran_I_Pvalue
+  ) |>
+  mutate(across(where(is.numeric), ~ round(.x, 2) |> prettyNum(big.mark = ","))) |>
+  kable(
+    format = "html",
+    caption = "Descriptive Statistics and Spatial Autocorrelation: Jacob Frey Average Vote Share by Census Tract (2017-2025)"
+  ) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+## Predictor Variables
+
+The following predictor variables, collected from the 2019-2023 American Community Survey (ACS) 5-year estimates, are used in the spatial regression models. Detailed descriptions of the predictor variables are provided in the appendix.
+
+### Descriptive Statistics and Spatial Autocorrelation: Predictor Variables
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+# Read predictor variables statistics
+predictor_stats <- read_csv("../outputs/spatial_regression_predictor_vars_stats.csv", show_col_types = FALSE)
+
+# Format and display the table
+predictor_stats |>
+  select(
+    `Variable` = Variable,
+    `Mean` = Mean,
+    `Median` = Median,
+    `Min` = Min,
+    `Max` = Max,
+    `SD` = SD,
+    `Moran's I` = Moran_I,
+    `p-value` = Moran_I_Pvalue
+  ) |>
+  mutate(across(where(is.numeric), ~ round(.x, 2) |> prettyNum(big.mark = ","))) |>
+  kable(
+    format = "html",
+    caption = "Descriptive Statistics and Spatial Autocorrelation: Predictor Variables"
+  ) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+Results comparing Census variables to election results should be carefully interpreted. First, there is the ecological inference issue, where aggregated demographic and socioeconomic characteristics may not be representative of individual voters in a tract. For instance, if we were to find a high correlation between a tract's percentage of renters and Frey's vote share, we cannot conclude that renters are more likely to support Frey directly, only that tracts with more renters are more likely to vote for Frey (a subtle yet important distinction). Second, the population that votes in a mayoral election is not the same as the population living in a tract. For instance, some statistics like racial demographics include children under the age of 18, which are not eligible to vote. Others are not eligible to vote because of their citizenship status. Finally, not every eligible voter in a tract votes in a mayoral election, and in general, older and highly-educated residents tend to be more likely to vote in mayoral elections.
+
+## OLS Regression Model
+
+### Model Specification
+
+$$
+Frey Share = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \epsilon
+$$
+
+where $x_1, x_2, \ldots, x_n$ are the census variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
+
+### OLS Regression Model Coefficients
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Read OLS coefficients
+ols_coef <- read_csv("../outputs/spatial_regression_ols_coefficients.csv", show_col_types = FALSE)
+
+# Format and display coefficients table
+ols_coef |>
+  mutate(
+    Estimate = round(Estimate, 4),
+    StdError = round(StdError, 4),
+    TValue = round(TValue, 3),
+    PValue = round(PValue, 4),
+    Significance = case_when(
+      PValue < 0.001 ~ "***",
+      PValue < 0.01 ~ "**",
+      PValue < 0.05 ~ "*",
+      PValue < 0.1 ~ ".",
+      TRUE ~ ""
+    )
+  ) |>
+  select(Variable, Estimate, StdError, TValue, PValue, Significance) |>
+  kable(
+    format = "html",
+    caption = "OLS Regression Coefficients: Frey Average Vote Share",
+    col.names = c("Variable", "Estimate", "Std. Error", "t-value", "p-value", ""),
+    align = c("l", "r", "r", "r", "r", "c")
+  ) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) |>
+  footnote(
+    general = "Significance codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
+    general_title = "Note:"
+  )
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+# Read OLS fit statistics
+ols_fit <- read_csv("../outputs/spatial_regression_ols_fit_stats.csv", show_col_types = FALSE)
+
+# Format and display fit statistics table
+ols_fit |>
+  mutate(
+    Value = case_when(
+      Statistic %in% c("R-squared", "Adjusted R-squared") ~ round(Value, 4),
+      Statistic == "F-statistic" ~ round(Value, 2),
+      Statistic == "F p-value" ~ round(Value, 4),
+      Statistic %in% c("AIC", "BIC") ~ round(Value, 2),
+      Statistic == "Residual SE" ~ round(Value, 4),
+      TRUE ~ Value
+    )
+  ) |>
+  kable(
+    format = "html",
+    caption = "OLS Regression Model Fit Statistics",
+    col.names = c("Statistic", "Value"),
+    align = c("l", "r")
+  ) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+## Spatial Error Model (SEM)
+
+### Model Specification
+
+$$
+Frey Share = X\beta + u
+$$
+
+$$
+u = \lambda W u + \epsilon
+$$
+
+where $u$ is the spatial error term, $\lambda$ is the spatial autoregressive parameter, $W$ is the spatial weight matrix, and $\epsilon$ is the "white noise" error term.
+
+### Model Estimation
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Read SAR coefficients
+sar_coef <- read_csv("../outputs/spatial_regression_sar_coefficients.csv", show_col_types = FALSE)
+
+# Format and display coefficients table
+sar_coef |>
+  mutate(
+    Estimate = round(Estimate, 4),
+    StdError = round(StdError, 4),
+    ZValue = round(ZValue, 3),
+    PValue = round(PValue, 4),
+    Significance = case_when(
+      PValue < 0.001 ~ "***",
+      PValue < 0.01 ~ "**",
+      PValue < 0.05 ~ "*",
+      PValue < 0.1 ~ ".",
+      TRUE ~ ""
+    )
+  ) |>
+  select(Variable, Estimate, StdError, ZValue, PValue, Significance) |>
+  kable(
+    format = "html",
+    caption = "Spatial Error Model (SEM) Coefficients: Frey Average Vote Share",
+    col.names = c("Variable", "Estimate", "Std. Error", "z-value", "p-value", ""),
+    align = c("l", "r", "r", "r", "r", "c")
+  ) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) |>
+  footnote(
+    general = "Significance codes: 0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1",
+    general_title = "Note:"
+  )
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+# Read SAR fit statistics
+sar_fit <- read_csv("../outputs/spatial_regression_sar_fit_stats.csv", show_col_types = FALSE)
+
+# Format and display fit statistics table
+sar_fit |>
+  mutate(
+    Value = case_when(
+      Statistic == "Pseudo R-squared" ~ round(Value, 4),
+      Statistic %in% c("AIC", "BIC") ~ round(Value, 2),
+      Statistic == "Log-likelihood" ~ round(Value, 2),
+      Statistic == "Lambda" ~ round(Value, 4),
+      Statistic == "Lambda Std Error" ~ round(Value, 4),
+      Statistic == "Lambda z-value" ~ round(Value, 3),
+      Statistic == "Lambda p-value" ~ round(Value, 4),
+      TRUE ~ Value
+    )
+  ) |>
+  kable(
+    format = "html",
+    caption = "Spatial Error Model (SEM) Fit Statistics",
+    col.names = c("Statistic", "Value"),
+    align = c("l", "r")
+  ) |>
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+## Appendix
+
+### Table 2.2: Predictor Variable Descriptions
+| Variable              | Description                                                                             |
+|-----------------------|-----------------------------------------------------------------------------------------|
+| pct_white             | Percentage of a tract's population that is non-Hispanic White.                          |
+| pct_bachelors_plus    | Percentage of a tract's population aged 25 or older that has a bachelor's degree or higher.              |
+| med_hh_income         | Median household income in the tract.                                                   |
+| pct_higher_ed         | Percentage of a tract's population that is enrolled in higher education (college or higher). |
+| pct_english_only      | Percentage of households in a tract that speak only English at home.                    |
+| pct_owner_occupied    | Percentage of a tract's housing units that are owner-occupied.                          |
+| pct_rent_burdened     | Percentage of a tract's housing units that are rent burdened (paying more than 30% of income on rent). |
+| pct_built_post2000    | Percentage of a tract's housing units that were built after 2000.                       |
+| pct_multifamily       | Percentage of a tract's housing units that are multifamily (2+ units).                  |
+| pct_moved_2021_later  | Percentage of a tract's population that moved in 2021 or later.                         |
+| pct_same_sex_hh       | Percentage of a tract's households that are same-sex couples.                           |
+| pct_age_18_34         | Percentage of a tract's population that is 18-34 years old.                             |
+| pct_age_65_plus       | Percentage of a tract's population that is 65 years old or older.                       |
+| unemployment_rate     | Unemployment rate in the tract.                                                         |
