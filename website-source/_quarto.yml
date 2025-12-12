@@ -1,5 +1,7 @@
 project:
   type: website
+  pre-render: "./cleanup-knit.sh"
+  post-render: "./cleanup-knit.sh"
 
 website:
   title: "Minneapolis Spatial Analysis"
@@ -20,4 +22,7 @@ format:
   html:
     theme: cosmo
     toc: true
+    toc-depth: 2
     code-fold: show
+    highlight-style: tango
+    number-sections: true

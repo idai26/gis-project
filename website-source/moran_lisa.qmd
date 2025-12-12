@@ -4,19 +4,176 @@ title: "Spatial Clustering"
 
 ## Spatial Patterns - Moran's I and Local Indicators of Spatial Association (LISA)
 
-To assess the degree of political polarization within Minneapolis, we examine whether there is a significant degree of clustering in election results. Jacob Frey has run in and won three Minneapolis mayoral elections, starting by unseating incumbent Betsy Hodges in 2017. After winning the city's first election featuring ranked choice voting (RCV) in 2013, Hodges was embroiled in continual scandals involving the Minneapolis Police Department (Sepic 2017). Critics from the left found her response to the police killings of Jamar Clark and Justine Damond lacking in substance, while those on the right were upset by her firing of MPD Chief Janeé Harteau (Dally 2017). Progressive State Rep. Raymond Dehn and moderate Councilman Jacob Frey squeezed out Hodges, forcing her out of the final round of RCV that Frey won with 57.2% of the vote. Looking at a map of the final round, Frey dominated in his council district in North Loop and Downtown East as well as Southwest Minneapolis, while Dehn performed strongest near the University of Minnesota campus and along Lake Street in South Minneapolis. 
+Using Moran's I, we can quantify the degree of geographic clustering of a variable. Moran's I ranges from -1 to 1, where -1 suggests a checkerboard pattern of perfect anti-clustering (very high Frey voteshare next to very low Frey vote share), 0 suggests no spatial pattern, and 1 suggests perfect clustering (very high Frey vote share next to similar frey vote shares). For instance, the Moran's I value of 0.629 in Frey's final-round vote share in 2017 suggests a high degree of clustering, akin to findings from legislative election in countries like South Korea and Spain. In other words, geographic clustering in Frey's vote share is similar to the rates found in elections contested by well-established political parties. The p-value of 0.001 means that in fewer than 1 in 1,000 cases does this degree of clustering occur by random chance. 
 
-Using Moran's I, we can quantify the degree of geographic clustering in Frey's vote share. Moran's I ranges from -1 to 1, where -1 suggests a checkerboard pattern of perfect anti-clustering (very high Frey voteshare next to very low Frey vote share), 0 suggests no spatial pattern, and 1 suggests perfect clustering (very high Frey vote share next to similar frey vote shares). The value of 0.629 suggests a high degree of clustering, akin to findings from legislative election in countries like South Korea and Spain. In other words, geographic clustering in Frey's vote share is similar to the rates found in elections contested by well-established political parties. The p-value of 0.001 means that in fewer than 1 in 1,000 cases does this degree of clustering occur by random chance. 
-LISA (Local Indicators of Spatial Association) tells us where the clustering is taking place, finding precincts where Frey got a high percentage of the vote that are surrounded by other precincts where he got a high percentage of the vote. Frey's has two distinct strongholds, depicted in red. First is the core of Downtown Minneapolis, home to more affluent renters in highrise buildings. The second is Southwest Minneapolis, with high-income homeowners living largely in single-family homes. The anti-Frey bloc is a large swath stretching from the Lake Street corridor up through the University of Minnesota campus, inhabited by younger renters and large Latine, Indigenous, and Black communities.
+To determine which regions are significant contributors to the Moran's I statistic, LISA (Local Indicators of Spatial Association) tells us where the clustering is taking place. LISA finds precincts where Frey got a high percentage of the vote that are surrounded by other precincts where he got a high percentage of the vote as well as areas where he got a low percentage of the vote surrounded by other areas wehre he got a low percentage. There are also "High-Low" and "Low-High" precincts, which are precincts where Frey got a high percentage of the vote surrounded by precincts where he got a low percentage of the vote, and vice versa.
+
+
+### 2017 Mayoral Election: Jacob Frey beats Betsy Hodges
+
+Jacob Frey has run in and won three Minneapolis mayoral elections, starting by unseating incumbent Betsy Hodges in 2017. After winning the city's first election featuring ranked choice voting (RCV) in 2013, Hodges was embroiled in continual scandals involving the Minneapolis Police Department (Sepic 2017). Critics from the left found her response to the police killings of Jamar Clark and Justine Damond lacking in substance, while those on the right were upset by her firing of MPD Chief Janeé Harteau (Dally 2017). Progressive State Rep. Raymond Dehn and moderate Councilman Jacob Frey squeezed out Hodges, forcing her out of the final round of RCV that Frey won with 57.2% of the vote (Figure 1.1). Looking at a map of the final round, Frey dominated in his council district in North Loop and Downtown East as well as Southwest Minneapolis, while Dehn performed strongest near the University of Minnesota campus and along Lake Street in South Minneapolis. 
+
+:::{.column-screen-inset}
+:::{.columns}
+:::{.column}
+![Figure 1.1: Jacob Frey's vote share by precinct, 2017](resources/plots/2017_frey_share.png)
+:::
+:::{.column}
+![Figure 1.2: LISA Clusters of Frey's vote share, 2017](resources/plots/2017_lisa_clusters.png)
+:::
+:::
+:::
+
+LISA (Local Indicators of Spatial Association) tells us where the clustering is taking place, finding precincts where Frey got a high percentage of the vote that are surrounded by other precincts where he got a high percentage of the vote. Frey's has two distinct strongholds, depicted in red (Figure 1.2). First is the core of Downtown Minneapolis, home to more affluent renters in highrise buildings. The second is Southwest Minneapolis, with high-income homeowners living largely in single-family homes. The anti-Frey bloc is a large swath stretching from the Lake Street corridor up through the University of Minnesota campus, inhabited by younger renters and large Latine, Indigenous, and Black communities.
+
+### 2021 Mayoral Election: Jacob Frey fends off Kate Knuth
 
 Four years later, Frey was running as an incumbent, defending his record that had been battered by the twin crises of the COVID-19 pandemic and the murder of George Floyd by Derek Chauvin, a Minneapolis police officer. The ensuing protests, along with episodes of looting and the torching of a Minneapolis police station, once again put police violence and racial discrimination at the forefront of both local and global discourse. Like Hodges, Frey entered his re-election campaign dogged by critics on left and right that accused him of alternatively heavy-handed or inadequate response to the protests and actions to reform the MPD. On the same day as the Mayoral election, Minneapolis voters also voted on three referenda, the most prominent a proposal to replace the MPD with a Department of Public Safety. Opponents derided the measure as an act of "defunding the police", and with Frey and MPD Chief Medaria Arradondo firmly in the No camp, the measure was soundly defeated, receiving less than 45% of the vote (Kaste 2021). 
+
+:::{.column-screen-inset}
+:::{.columns}
+:::{.column}
+![Figure 2.1: Jacob Frey's vote share by precinct, 2021](resources/plots/2021_frey_share.png)
+:::
+:::{.column}
+![Figure 2.2: LISA Clusters of Frey's vote share, 2021](resources/plots/2021_lisa_clusters.png)
+:::
+:::
+:::
 
 Frey faced two major opponents, Kate Knuth and Sheila Nezhad, who both supported the police reform measure. Knuth reached the final round of RCV against Frey, which he won with 56.2% of the vote. Geographic clustering in Frey's vote share, measured by Moran's I, slipped from 0.629 to 0.613, which still represents a level of clustering unlikely to occur through random chance. Looking at the LISA clusters of high and low Frey support, Frey expanded his base into North Minneapolis while shedding support in Southwest. North Minneapolis, a working-class region with a large African-American population, saw moderate challenger Latrisha Vetaw rout a progressive councilmember who supported the police amendment (Ansari 2021). There was a single "High-Low" precinct, which represents a neighborhood with a spike in Frey support surrounded by areas of low Frey support. This precinct is home to Minneapolis' Third Police Precinct and other buildings that were torched during the late-May 2020 protests. 
 
 Taken together, these shifts suggest Frey successfully capitalized on voter skepticism of the police reform push, especially in areas that witnessed violent confrontations between protestors and police as well as instances of looting or vandalism. At the same time, Frey shed support in Southwest Minneapolis, which is highly educated, lower density, and heavily White. Despite the heightened salience of discourse around racism and police violence, there is superficial evidence of racial depolarization in Minneapolis' 2021 mayoral election given these countervailing trends. However, the degree of geographic clustering in Frey's vote share dropped only slightly, suggesting a shift within coalitions rather than a general depolarization of the electorate.
 
+### 2025 Mayoral Election: Jacob Frey narrowly beats Omar Fateh
+
 By 2025, Frey had been mayor for eight years, leading to both hardened opposition and support. City councilors, while officially non-partisan, have organized into ideological blocs defined largely by their positions on Frey’s tenure. Proto-parties sprung up in the form of outside groups spending millions on municipal elections since 2021 (Nace 2025). While policing remained a major concern for voters, the 2025 mayoral election became a referendum on Frey and the progressive majority on City Council’s increasingly antagonistic relationship. Tensions peaked with Frey’s unprecedented veto of the 2025 city budget, complicating the city’s efforts to improve public safety and address rising housing costs and homelessness (Spencer 2024). A slate of candidates emerged to challenge Frey, led by State Senator Omar Fateh. Despite their ideological differences – the candidates ranged from business-friendly entrepreneur Jazz Hampton to the democratic socialist Fateh – the challengers urged their supporters to rank the rest of the slate on their ballot, deepening the Frey-centered cleavage in Minneapolis politics. 
+
+:::{.column-screen-inset}
+:::{.columns}
+:::{.column}
+![Figure 3.1: Jacob Frey's vote share by precinct, 2025](resources/plots/2025_frey_share.png)
+:::
+:::{.column}
+![Figure 3.2: LISA Clusters of Frey's vote share, 2025](resources/plots/2025_lisa_clusters.png)
+:::
+:::
+:::
 
 Frey once again won in the final round of ranked choice voting, but with his lowest-ever vote share: 53.0%. Fateh reached the final round, consolidating support in a large swath of South Minneapolis stretching up through Northeast. Frey expanded his base in Southwest Minneapolis, building a powerful coalition of older homeowners. Geographic clustering in Frey vote share reached a high water mark of 0.681, driven by Fateh's massive gains with Somali communities in Cedar-Riverside that connected the two previous hotbeds of progressive politics in South Minneapolis and the University of Minnesota. Frey also lost ground with younger professionals in Downtown Minneapolis.
 
 Even as Frey's vote share decreased, geographic clustering in his vote share reached an all-time high. These countervailing trends indicate a city increasingly divided along geographic lines in their opinion of Frey. Comparing the LISA clusters between 2021 and 2025 reveals an increasingly consolidated split between anti-Frey voters in South Minneapolis and Frey supporters in Southwest Minneapolis, meaning both opposition and support hardened over the four years of Frey's second term. An open question is how the city's geographic divisions will persist after Frey leaves the political scene in 2029, when he has indicated he will not run for re-election. Already, media speculation has swirled around two councilmembers in Frey's bloc on the council – Latrisha Vetaw of North Minneapolis and Linea Palmisano of Southwest Minneapolis. Each represents a different geographic cluster of Frey's coalition, and if past is prologue, Palmisano may have the upper hand given the increasing depth of support for Frey in Southwest Minneapolis. 
+
+### Summary Statistics by LISA Cluster
+
+The following tables provide detailed demographic statistics for High-High and Low-Low LISA clusters of Frey vote share in each election. Demographic statistics are computed using areal weighted interpolation, similar to the procedure used for election imputation, to ensure accurate representation of population characteristics within each cluster.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| results: asis
+
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+
+# Source the cluster summary script (suppress all output)
+suppressMessages(
+  suppressWarnings(
+    invisible(capture.output(
+      source("../scripts/R/lisa_cluster_summary.R", echo = FALSE, verbose = FALSE),
+      type = "output"
+    ))
+  )
+)
+
+# Format and display tables for each year
+for (yr in c(2017, 2021, 2025)) {
+  year_data <- all_summaries |>
+    filter(year == yr) |>
+    select(-year) |>
+    mutate(across(where(is.numeric), ~ round(.x, 1))) |>
+    select(
+      `Cluster Type` = cluster_type,
+      `N Precincts` = n_precincts,
+      `Moran's I` = morans_i,
+      `White` = pct_white,
+      `Black` = pct_black,
+      `Asian` = pct_asian,
+      `Hispanic` = pct_hispanic,
+      `Bachelor's+` = pct_bachelors_plus,
+      `Higher Ed` = pct_higher_ed,
+      `Age 0-17` = pct_age_0_17,
+      `Age 18-34` = pct_age_18_34,
+      `Age 35-49` = pct_age_35_49,
+      `Age 50-64` = pct_age_50_64,
+      `Age 65+` = pct_age_65_plus,
+      `Owner Occupied` = pct_owner_occupied,
+      `Rent Burdened` = pct_rent_burdened,
+      `English Only` = pct_english_only,
+      `Median HH Income ($)` = med_hh_income
+    )
+  
+  if (nrow(year_data) > 0) {
+    cat("\n\n### ", yr, " Election\n\n")
+    
+    # First table: up to and including Higher Ed
+    table1 <- year_data |>
+      select(
+        `Cluster Type`,
+        `N Precincts`,
+        `Moran's I`,
+        `White`,
+        `Black`,
+        `Asian`,
+        `Hispanic`,
+        `Bachelor's+`,
+        `Higher Ed`
+      ) |>
+      kbl(
+        caption = paste0(yr, " Minneapolis Mayoral Election - LISA Cluster Demographics (Part 1)"),
+        align = c("l", rep("r", 8)),
+        booktabs = TRUE
+      ) |>
+      kable_styling(
+        latex_options = c("striped", "hold_position"),
+        full_width = FALSE
+      ) |>
+      column_spec(1, bold = TRUE) |>
+      row_spec(0, bold = TRUE)
+    
+    cat(table1)
+    cat("\n\n")
+    
+    # Second table: from Age 0-17 to the end
+    table2 <- year_data |>
+      select(
+        `Cluster Type`,
+        `Age 0-17`,
+        `Age 18-34`,
+        `Age 35-49`,
+        `Age 50-64`,
+        `Age 65+`,
+        `Owner Occupied`,
+        `Rent Burdened`,
+        `English Only`,
+        `Median HH Income ($)`
+      ) |>
+      kbl(
+        caption = paste0(yr, " Minneapolis Mayoral Election - LISA Cluster Demographics (Part 2)"),
+        align = c("l", rep("r", 9)),
+        booktabs = TRUE
+      ) |>
+      kable_styling(
+        latex_options = c("striped", "hold_position"),
+        full_width = FALSE
+      ) |>
+      column_spec(1, bold = TRUE) |>
+      row_spec(0, bold = TRUE)
+    
+    cat(table2)
+    cat("\n\n")
+  }
+}
+```
