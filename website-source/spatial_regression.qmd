@@ -1,0 +1,24 @@
+---
+title: "Spatial Regression"
+---
+The evidence of spatial clustering in Frey's vote share raises questions about the underlying factors that contribute to support or opposition to him. We can use spatial regression to model the relationship between Frey's average vote share in 2017, 2021, and 2025 and the demographic and socioeconomic characteristics of different census tracts.
+
+Ordinary Least Squares (OLS) regression is a common method for modeling the relationship between a dependent variable and one or more independent variables. In OLS regression, we assume that the relationship between the dependent variable and the independent variables is linear. The model takes the form
+
+$$
+y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \epsilon
+$$
+
+where $y$ is the dependent variable, $x_1, x_2, \ldots, x_n$ are the independent variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
+
+In spatial regression, we account for the spatial autocorrelation of the error term. When there is spatial clustering in the error term (as diagnosed by calculating Moran's I of the residuals of an OLS regression), we will systematically underestimated the standard errors of regression coefficients. Thus, we need to use a spatial error model to account for the spatial autocorrelation of the error term.
+
+When we are most interested in the relatinship between the dependent variable and the independent variables, we use a spatial error model (SEM). The model takes the form:
+
+$$
+y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \lambda W y + \epsilon
+$$
+
+where $\lambda$ is the spatial autoregressive parameter, $W$ is the spatial weight matrix, and $\epsilon$ is the error term.
+
+The spatial weight matrix $W$ is a matrix of weights for the neighboring units. In our case, we use the Queen contiguity weight matrix, which is a binary matrix that is 1 if the units are neighbors and 0 otherwise, defined by the adjacency of the units' polygons (including corners touching).
