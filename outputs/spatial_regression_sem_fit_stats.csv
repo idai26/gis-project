@@ -1,0 +1,11 @@
+Statistic,Value
+Pseudo R-squared,0.871359617033997
+AIC,790.703634070231
+BIC,838.232073345375
+Log-likelihood,-378.351817035115
+Lambda,0.917335217202206
+Lambda Std Error,0.0336312389022457
+Lambda z-value,27.2762838106732
+Lambda p-value,0
+Moran's I,0.0571229476959227
+Moran's I p-value,0.1106

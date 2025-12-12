@@ -1,1 +1,4 @@
 /.quarto/
+
+# Cursor IDE debug logs
+.cursor/debug.log

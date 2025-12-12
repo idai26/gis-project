@@ -236,9 +236,13 @@ ols_coefficients <- ols_coefficients |>
     PValue = `Pr(>|t|)`
   )
 
+# Extract Moran's I for OLS residuals
+moran_test_ols_resids <- moran.test(model_linear$residuals, lw)
+print(moran_test_ols_resids)
+
 # Extract fit statistics
 ols_fit_stats <- data.frame(
-  Statistic = c("R-squared", "Adjusted R-squared", "F-statistic", "F p-value", "AIC", "BIC", "Residual SE"),
+  Statistic = c("R-squared", "Adjusted R-squared", "F-statistic", "F p-value", "AIC", "BIC", "Residual SE", "Moran's I", "Moran's I p-value"),
   Value = c(
     linear_summary$r.squared,
     linear_summary$adj.r.squared,
@@ -246,7 +250,9 @@ ols_fit_stats <- data.frame(
     pf(linear_summary$fstatistic[1], linear_summary$fstatistic[2], linear_summary$fstatistic[3], lower.tail = FALSE),
     AIC(model_linear),
     BIC(model_linear),
-    linear_summary$sigma
+    linear_summary$sigma,
+    moran_test_ols_resids$estimate[1],
+    format.pval(moran_test_ols_resids$p.value, digits = 4)
   )
 )
 
@@ -258,22 +264,38 @@ cat("  - spatial_regression_ols_coefficients.csv\n")
 cat("  - spatial_regression_ols_fit_stats.csv\n\n")
 
 joined_data_sf$linear_resids <- model_linear$residuals
-map_plot(joined_data_sf, "linear_resids", "Linear Regression Residuals\n (Frey Average Vote Share)", "Residual")
+
+# Plot OLS residuals on map and save to file
+ols_resid_map <- map_plot(
+  joined_data_sf,
+  "linear_resids",
+  "Linear Regression Residuals\n (Frey Average Vote Share)",
+  "Residual"
+)
+
+# Save plot to PNG for website output
+ggsave(
+  filename = "../website-source/resources/plots/ols_residuals.png",
+  plot = ols_resid_map,
+  width = 7,
+  height = 7,
+  dpi = 300
+)
 
 moran_test_linear_resids <- moran.test(joined_data_sf$linear_resids, lw)
 print(moran_test_linear_resids)
 
-# SAR Model with Raw Census Variables
-model_sar <- errorsarlm(formula_linear, data = joined_data_sf, listw = lw, Durbin = FALSE)
-print(summary(model_sar))
+# Spatial Error Model (SEM) with Raw Census Variables
+model_sem <- errorsarlm(formula_linear, data = joined_data_sf, listw = lw, Durbin = FALSE)
+print(summary(model_sem))
 
-# Extract and save SAR model summary
-sar_summary <- summary(model_sar)
+# Extract and save SEM model summary
+sem_summary <- summary(model_sem)
 
 # Extract coefficients
-sar_coefficients <- as.data.frame(sar_summary$Coef)
-sar_coefficients$Variable <- rownames(sar_coefficients)
-sar_coefficients <- sar_coefficients |>
+sem_coefficients <- as.data.frame(sem_summary$Coef)
+sem_coefficients$Variable <- rownames(sem_coefficients)
+sem_coefficients <- sem_coefficients |>
   select(Variable, Estimate, `Std. Error`, `z value`, `Pr(>|z|)`) |>
   rename(
     StdError = `Std. Error`,
@@ -281,36 +303,62 @@ sar_coefficients <- sar_coefficients |>
     PValue = `Pr(>|z|)`
   )
 
+joined_data_sf$sem_resids <- model_sem$residuals
+
+# Plot SEM residuals on map and save to file
+sem_resid_map <- map_plot(
+  joined_data_sf,
+  "sem_resids",
+  "Spatial Error Model Residuals\n (Frey Average Vote Share)",
+  "Residual"
+)
+
+# Save plot to PNG for website output
+ggsave(
+  filename = "../website-source/resources/plots/sem_residuals.png",
+  plot = sem_resid_map,
+  width = 7,
+  height = 7,
+  dpi = 300
+)
+
+# Extract Moran's I for SEM residuals
+moran_test_sem_resids <- moran.test(model_sem$residuals, lw)
+print(moran_test_sem_resids)
+
+
 # Extract fit statistics including lambda
 # Calculate pseudo R-squared as correlation between fitted and observed values
-pseudo_r2 <- cor(model_sar$y, model_sar$fitted.values, use = "complete.obs")^2
+pseudo_r2 <- cor(model_sem$y, model_sem$fitted.values, use = "complete.obs")^2
 
-sar_fit_stats <- data.frame(
-  Statistic = c("Pseudo R-squared", "AIC", "BIC", "Log-likelihood", "Lambda", "Lambda Std Error", "Lambda z-value", "Lambda p-value"),
+sem_fit_stats <- data.frame(
+  Statistic = c("Pseudo R-squared", "AIC", "BIC", "Log-likelihood", "Lambda", "Lambda Std Error", "Lambda z-value", "Lambda p-value", "Moran's I", "Moran's I p-value"),
   Value = c(
     pseudo_r2,
-    AIC(model_sar),
-    BIC(model_sar),
-    as.numeric(logLik(model_sar)),
-    sar_summary$lambda,
-    sar_summary$lambda.se,
-    sar_summary$lambda / sar_summary$lambda.se,
-    2 * (1 - pnorm(abs(sar_summary$lambda / sar_summary$lambda.se)))
+    AIC(model_sem),
+    BIC(model_sem),
+    as.numeric(logLik(model_sem)),
+    sem_summary$lambda,
+    sem_summary$lambda.se,
+    sem_summary$lambda / sem_summary$lambda.se,
+    2 * (1 - pnorm(abs(sem_summary$lambda / sem_summary$lambda.se))),
+    moran_test_sem_resids$estimate[1],
+    format.pval(moran_test_sem_resids$p.value, digits = 4)
   )
 )
 
 # Save to CSV
-write_csv(sar_coefficients, "../outputs/spatial_regression_sar_coefficients.csv")
-write_csv(sar_fit_stats, "../outputs/spatial_regression_sar_fit_stats.csv")
-cat("SAR model summaries saved to outputs/ directory:\n")
-cat("  - spatial_regression_sar_coefficients.csv\n")
-cat("  - spatial_regression_sar_fit_stats.csv\n\n")
+write_csv(sem_coefficients, "../outputs/spatial_regression_sem_coefficients.csv")
+write_csv(sem_fit_stats, "../outputs/spatial_regression_sem_fit_stats.csv")
+cat("SEM model summaries saved to outputs/ directory:\n")
+cat("  - spatial_regression_sem_coefficients.csv\n")
+cat("  - spatial_regression_sem_fit_stats.csv\n\n")
 
-joined_data_sf$sp_resids <- model_sar$residuals
-map_plot(joined_data_sf, "sp_resids", "Spatial Autoregressive Residuals\n (Frey Average Vote Share)", "Residual")
+joined_data_sf$sp_resids <- model_sem$residuals
+map_plot(joined_data_sf, "sp_resids", "Spatial Error Model Residuals\n (Frey Average Vote Share)", "Residual")
 
-moran_test_sar_resids <- moran.test(joined_data_sf$sp_resids, lw)
-print(moran_test_sar_resids)
+moran_test_sem_resids <- moran.test(joined_data_sf$sp_resids, lw)
+print(moran_test_sem_resids)
 
 # ============================================================================
 # MODEL COMPARISON: Accuracy Measures
@@ -352,18 +400,18 @@ extract_model_metrics <- function(model, moran_test, model_type = "linear") {
 
 # Extract metrics for all models
 metrics_linear <- extract_model_metrics(model_linear, moran_test_linear_resids, "linear")
-metrics_sar <- extract_model_metrics(model_sar, moran_test_sar_resids, "sar")
+metrics_sem <- extract_model_metrics(model_sem, moran_test_sem_resids, "sem")
 
 # Create comparison table
 model_comparison <- data.frame(
-  Model = c("Linear (OLS)", "Spatial Autoregressive (SAR)"),
-  AIC = c(metrics_linear$aic, metrics_sar$aic),
-  BIC = c(metrics_linear$bic, metrics_sar$bic),
-  RMSE = c(metrics_linear$rmse, metrics_sar$rmse),
-  MAE = c(metrics_linear$mae, metrics_sar$mae),
-  Lambda = c(NA, metrics_sar$lambda),
-  Moran_I_Residuals = c(metrics_linear$moran_i, metrics_sar$moran_i),
-  Moran_I_Pvalue = c(metrics_linear$moran_p, metrics_sar$moran_p)
+  Model = c("Linear (OLS)", "Spatial Error Model (SEM)"),
+  AIC = c(metrics_linear$aic, metrics_sem$aic),
+  BIC = c(metrics_linear$bic, metrics_sem$bic),
+  RMSE = c(metrics_linear$rmse, metrics_sem$rmse),
+  MAE = c(metrics_linear$mae, metrics_sem$mae),
+  Lambda = c(NA, metrics_sem$lambda),
+  Moran_I_Residuals = c(metrics_linear$moran_i, metrics_sem$moran_i),
+  Moran_I_Pvalue = c(metrics_linear$moran_p, metrics_sem$moran_p)
 )
 
 # Print comparison
@@ -375,13 +423,10 @@ print(model_comparison, digits = 4, row.names = FALSE)
 
 cat("\nNotes:\n")
 cat("  - R_Squared: For linear model, this is standard R-squared.\n")
-cat("    For SAR/SAC models, this is correlation-based R-squared (squared correlation\n")
+cat("    For SEM models, this is correlation-based R-squared (squared correlation\n")
 cat("    between fitted and actual values).\n")
-cat("  - Lambda: Spatial error coefficient (for SAR and SAC models).\n")
+cat("  - Lambda: Spatial error coefficient (for SEM models).\n")
 cat("    Indicates strength of spatial autocorrelation in errors.\n")
-cat("  - Rho: Spatial lag coefficient (for SAC models only).\n")
-cat("    Indicates strength of spatial dependence in the dependent variable.\n")
-cat("    SAC models include both spatial error (lambda) and spatial lag (rho).\n")
 cat("  - Moran_I_Residuals: Spatial autocorrelation in residuals.\n")
 cat("    Values closer to 0 indicate better spatial error handling.\n")
 cat("  - Lower AIC/BIC/RMSE/MAE indicates better model fit.\n")

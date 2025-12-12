@@ -34,7 +34,7 @@ To estimate support for Frey across the past three mayoral elections, we use the
 
 ### Jacob Frey Average Vote Share by Census Tract (2017-2025)
 
-```{r}
+```{r Frey Average Vote Share by Census Tract (2017-2025)}
 #| echo: false
 #| warning: false
 #| message: false
@@ -79,7 +79,7 @@ mapview_map_plot(joined_data_sf, "fry_sh_", "Frey Average Vote Share")
 ```
 
 ### Descriptive Statistics and Spatial Autocorrelation: Jacob Frey Average Vote Share by Census Tract (2017-2025)
-```{r}
+```{r Descriptive Statistics and Spatial Autocorrelation: Jacob Frey Average Vote Share by Census Tract (2017-2025)}
 #| echo: false
 #| warning: false
 #| message: false
@@ -117,7 +117,7 @@ dep_stats |>
 The following predictor variables, collected from the 2019-2023 American Community Survey (ACS) 5-year estimates, are used in the spatial regression models. Detailed descriptions of the predictor variables are provided in the appendix.
 
 ### Descriptive Statistics and Spatial Autocorrelation: Predictor Variables
-```{r}
+```{r Descriptive Statistics and Spatial Autocorrelation: Predictor Variables}
 #| echo: false
 #| warning: false
 #| message: false
@@ -146,9 +146,9 @@ predictor_stats |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 
-Results comparing Census variables to election results should be carefully interpreted. First, there is the ecological inference issue, where aggregated demographic and socioeconomic characteristics may not be representative of individual voters in a tract. For instance, if we were to find a high correlation between a tract's percentage of renters and Frey's vote share, we cannot conclude that renters are more likely to support Frey directly, only that tracts with more renters are more likely to vote for Frey (a subtle yet important distinction). Second, the population that votes in a mayoral election is not the same as the population living in a tract. For instance, some statistics like racial demographics include children under the age of 18, which are not eligible to vote. Others are not eligible to vote because of their citizenship status. Finally, not every eligible voter in a tract votes in a mayoral election, and in general, older and highly-educated residents tend to be more likely to vote in mayoral elections.
+Results from comparing Census variables to election results should be carefully interpreted. First, there is the ecological inference issue, where aggregated demographic and socioeconomic characteristics may not be representative of individual voters in a tract. For instance, if we were to find a high correlation between a tract's percentage of renters and Frey's vote share, we cannot conclude that renters are more likely to support Frey directly, only that tracts with more renters are more likely to vote for Frey (a subtle yet important distinction). Second, the population that votes in a mayoral election is not the same as the population living in a tract. For instance, some statistics like racial demographics include children under the age of 18, which are not eligible to vote. Others are not eligible to vote because of their citizenship status. Finally, not every eligible voter in a tract votes in a mayoral election, and in general, older and highly-educated residents tend to be more likely to vote in mayoral elections.
 
-## OLS Regression Model
+## Linear Regression Model (OLS)
 
 ### Model Specification
 
@@ -158,9 +158,9 @@ $$
 
 where $x_1, x_2, \ldots, x_n$ are the census variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
 
-### OLS Regression Model Coefficients
+### Linear Regression Model (OLS) Coefficients
 
-```{r}
+```{r OLS Regression Model Coefficients}
 #| echo: false
 #| warning: false
 #| message: false
@@ -202,7 +202,7 @@ ols_coef |>
   )
 ```
 
-```{r}
+```{r OLS Regression Model Fit Statistics}
 #| echo: false
 #| warning: false
 #| message: false
@@ -212,15 +212,22 @@ ols_coef |>
 ols_fit <- read_csv("../outputs/spatial_regression_ols_fit_stats.csv", show_col_types = FALSE)
 
 # Format and display fit statistics table
+# Helper function to safely round numeric values (vectorized)
+safe_round <- function(x, digits) {
+  num_val <- suppressWarnings(as.numeric(x))
+  ifelse(is.na(num_val), as.character(x), as.character(round(num_val, digits)))
+}
+
 ols_fit |>
   mutate(
     Value = case_when(
-      Statistic %in% c("R-squared", "Adjusted R-squared") ~ round(Value, 4),
-      Statistic == "F-statistic" ~ round(Value, 2),
-      Statistic == "F p-value" ~ round(Value, 4),
-      Statistic %in% c("AIC", "BIC") ~ round(Value, 2),
-      Statistic == "Residual SE" ~ round(Value, 4),
-      TRUE ~ Value
+      Statistic %in% c("R-squared", "Adjusted R-squared") ~ safe_round(Value, 4),
+      Statistic == "F-statistic" ~ safe_round(Value, 2),
+      Statistic == "F p-value" ~ safe_round(Value, 4),
+      Statistic %in% c("AIC", "BIC") ~ safe_round(Value, 2),
+      Statistic == "Residual SE" ~ safe_round(Value, 4),
+      Statistic == "Moran's I" ~ safe_round(Value, 4),
+      TRUE ~ as.character(Value)
     )
   ) |>
   kable(
@@ -232,7 +239,15 @@ ols_fit |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
 
+### Moran's I Test for OLS Residuals
+The result of Moran's I test for the residuals of the linear regression model (OLS) is 0.467, which is statistically significant at the 0.01 level. This suggests that the residuals are spatially clustered, which is a violation of the assumption of independence of the error terms. As such, we need to use a spatial error model to account for the spatial autocorrelation of the error terms to obtain unbiased and consistent estimates of the regression coefficients.
+
+![Map of OLS Residuals by Census Tract](./resources/plots/ols_residuals.png)
+
+Looking at the map of OLS residuals by census tract, there is clear evidence of spatial clustering. The OLS model underestimates Frey's vote share in North Minneapolis, Southwest Minneapolis, Downtown Minneapolis, and Cedar-Riverside. It overstimates his share in South Minneapolis, Northeast, and Hiawatha/Longfellow. As a general trend, it appears to underfit by underestimating Frey's vote share in his core support areas and overfit by overestimating his vote share in his less supportive areas.
+
 ## Spatial Error Model (SEM)
+To account for the spatial correlation of the error terms, we use a spatial error model (SEM) described above.
 
 ### Model Specification
 
@@ -248,7 +263,7 @@ where $u$ is the spatial error term, $\lambda$ is the spatial autoregressive par
 
 ### Model Estimation
 
-```{r}
+```{r SEM Regression Model Coefficients}
 #| echo: false
 #| warning: false
 #| message: false
@@ -258,11 +273,11 @@ library(tidyverse)
 library(knitr)
 library(kableExtra)
 
-# Read SAR coefficients
-sar_coef <- read_csv("../outputs/spatial_regression_sar_coefficients.csv", show_col_types = FALSE)
+# Read SEM coefficients
+sem_coef <- read_csv("../outputs/spatial_regression_sem_coefficients.csv", show_col_types = FALSE)
 
 # Format and display coefficients table
-sar_coef |>
+sem_coef |>
   mutate(
     Estimate = round(Estimate, 4),
     StdError = round(StdError, 4),
@@ -290,17 +305,17 @@ sar_coef |>
   )
 ```
 
-```{r}
+```{r SEM Regression Model Fit Statistics}
 #| echo: false
 #| warning: false
 #| message: false
 #| results: asis
 
-# Read SAR fit statistics
-sar_fit <- read_csv("../outputs/spatial_regression_sar_fit_stats.csv", show_col_types = FALSE)
+# Read SEM fit statistics
+sem_fit <- read_csv("../outputs/spatial_regression_sem_fit_stats.csv", show_col_types = FALSE)
 
 # Format and display fit statistics table
-sar_fit |>
+sem_fit |>
   mutate(
     Value = case_when(
       Statistic == "Pseudo R-squared" ~ round(Value, 4),
@@ -310,6 +325,7 @@ sar_fit |>
       Statistic == "Lambda Std Error" ~ round(Value, 4),
       Statistic == "Lambda z-value" ~ round(Value, 3),
       Statistic == "Lambda p-value" ~ round(Value, 4),
+      Statistic == "Moran's I" ~ round(Value, 4),
       TRUE ~ Value
     )
   ) |>
@@ -321,6 +337,22 @@ sar_fit |>
   ) |>
   kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"))
 ```
+
+### Moran's I Test for SEM Residuals
+The result of Moran's I test for the residuals of the spatial error model (SEM) is 0.0571, which is not statistically significant at the 0.05 level. This suggests that the residuals are not likely to be spatially clustered. A map of the SEM residuals by census tract shows a more random distribution of residuals across the city than the OLS residuals.
+
+![Map of SEM Residuals by Census Tract](./resources/plots/sem_residuals.png)
+
+While it is still possible to make out some spatial patterns in the SEM residuals, they are much less pronounced than the OLS residuals. This suggests that the SEM model is able to account for the spatial correlation of the error terms better than the OLS model.
+
+## Discussion
+The Moran's I test for the residuals of the OLS model provides evidence of spatial autocorrelation in the residuals, which means the OLS model is systemtically underestimating the variance of the regression coefficients. The SEM model is able to account for the spatial correlation of the error terms and provides more accurate estimates of the significance of the regression coefficients.
+
+Comparing the coefficients and their standard errors between the OLS and SEM models, we see that there are fewer significant coefficients in the SEM model. *pct_age_18_34* is negatively correlated with Frey's vote share, while *pct_age_65_plus* is positively correlated with Frey's vote share, suggesting that a major cleavage in support for Frey is age. The inclusion of *pct_higher_ed* also provides evidence that opposition to Frey among young voters is not only driven by students at the University of Minnesota, but also among young adults who are not students. Frey's support with older voters perhaps explains his success in three consecutive mayoral elections - older voters are, in general, more likely to vote in mayoral elections and are thus a powerful voting bloc. 
+
+The only significant coefficient in the SEM model is *pct_built_post2000*, which is positively correlated with Frey's vote share. One of the most impactful policies adopted under Frey's tenure has been the Minneapolis 2040 Comprehensive Plan, which opened up nearly the entire city to multifamily housing development and created ambitious affordable housing goals. Despite the strong pushback from some residents, it appears that areas that have seen more housing development during Frey's tenure are more supportive of him. Of course, we cannot determine the causal relationship between housing development and support for Frey. It is possible that areas that have seen more housing development during Frey's tenure are also the most economically prosperous and thus able to attract new development, giving them good reason to support him. On the other hand, Frey could also be directing resources to areas most supportive to him, reversing the causality.
+
+Future research might consider using a spatial lag model to account for the spatial correlation of the dependent variable. Due to the interpolation of election results to census tracts, there is the possibility that spatial diffusion in Frey's vote share would have been created artificially. As a result, I decided not to include a spatial lag model in this analysis. Using only precinct-level data from a single election might be a possible way deterine if one precicnt's support for Frey is significantly correlated with the support for Frey in its surrounding precincts, after accounting for the demographic trends in the surrounding precincts.
 
 ## Appendix
 
