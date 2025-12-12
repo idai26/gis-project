@@ -1,9 +1,7 @@
 ---
-title: "Frozen Conflict: Geographic Clustering and Polarization in Minneapolis Mayoral Elections"
+title: "Frozen Conflict: Geopgraphic Clustering and Polarization in Minneapolis Mayoral Elections"
 author: "Isak Dai"
-affiliation: "Georgetown University"
 date: "2025-12-12"
-abstract: "National political discourse, for better or worse, has focused on Minneapolis in recent years. The city has won praise for its visionary zoning policies that have opened up the vast majority of the city to multi-family housing and abolished parking minimums, shielding Minneapolis from soaring housing costs that have dogged other large cities. In the same city, George Floyd was murdered by a Minneapolis police officer, sparking worldwide protests and exposing the racism and discrimination at the center of Minneapolis life. This project will explore how these countervailing social trends play out in local politics. Mayor Jacob Frey has been at the center of political life, and as he begins his third term, it is pertinent to examine if and how Minneapolis political map has polarized under his tenure. Understanding that there are confounding factors between ideology, demography, and geography, this project will also examine the correlation between neighborhoods’ demographic and political makeups, taking into account spatial autocorrelation."
 ---
 # Literature Review
 

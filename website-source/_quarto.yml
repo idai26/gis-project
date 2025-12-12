@@ -1,22 +1,10 @@
 project:
-  type: website
+  type: manuscript
   pre-render: "./cleanup-knit.sh"
   post-render: "./cleanup-knit.sh"
-
-website:
-  title: "Minneapolis Spatial Analysis"
-  navbar:
-    left:
-      - href: index.qmd
-        text: Home
-      - href: about.qmd
-        text: About
-      - href: methods.qmd
-        text: Methods
-      - href: spatial_regression.qmd
-        text: Spatial Regression
-      - href: moran_lisa.qmd
-        text: Moran's I and LISA
+  output-dir: ../docs
+  render:
+    - index.qmd
 
 format:
   html:
@@ -26,3 +14,4 @@ format:
     code-fold: show
     highlight-style: tango
     number-sections: true
+    title: "Minneapolis Spatial Analysis"

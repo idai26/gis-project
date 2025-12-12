@@ -1,0 +1,28 @@
+---
+title: "Methods"
+---
+
+## Methodology
+
+### Data Preparation
+
+[Describe data loading and preparation steps]
+
+### Spatial Analysis
+
+[Describe spatial analysis methods]
+
+### Regression Models
+
+[Describe regression modeling approach]
+
+#### Model Types
+
+- Linear Regression (OLS)
+- Spatial Autoregressive (SAR) Models
+- Principal Components Analysis
+
+### Software and Tools
+
+- R (spatial analysis packages)
+- Quarto (documentation and website)

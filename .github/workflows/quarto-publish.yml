@@ -1,0 +1,50 @@
+name: Publish Quarto Manuscript
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+        with:
+          version: prerelease
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.3'
+
+      - name: Install R dependencies
+        run: |
+          Rscript -e "install.packages(c('tidyverse', 'sf', 'mapview', 'knitr', 'kableExtra', 'spdep', 'spatialreg'), repos='https://cloud.r-project.org')"
+
+      - name: Render Quarto
+        working-directory: website-source
+        run: quarto render
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+

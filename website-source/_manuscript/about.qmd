@@ -1,0 +1,23 @@
+---
+title: "About"
+---
+
+## About the Project
+
+### Project Description
+
+This project analyzes spatial patterns in Minneapolis using census data, election results, and spatial regression techniques.
+
+### Data Sources
+
+- Census tract data
+- Election precinct data
+- Spatial boundary files
+
+### Objectives
+
+[Add project objectives here]
+
+### Background
+
+[Add project background information here]
