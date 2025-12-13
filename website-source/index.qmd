@@ -559,3 +559,29 @@ Future research might consider using a spatial lag model to account for the spat
 | pct_age_18_34         | Percentage of a tract's population that is 18-34 years old.                             |
 | pct_age_65_plus       | Percentage of a tract's population that is 65 years old or older.                       |
 | unemployment_rate     | Unemployment rate in the tract.                                                         |
+
+# References
+
+<div style="text-indent: -2em; padding-left: 2em;">
+
+Ansari, H. (2021, October 11). Candidates Phillipe Cunningham and LaTrisha Vetaw agree that public safety policy is the main issue in Minneapolis' Ward 4. Next question: How to fix it? *Sahan Journal*. https://sahanjournal.com/democracy-politics/minneapolis-election-2021-city-council-ward-4-phillipe-cunningham-latrisha-vetaw/
+
+Caleiro, A., & Guerreiro, G. (2003). Understanding the election results in Portugal: A spatial econometrics point of view (Documento de Trabalho No. 2003/12). *Universidade de Évora, Departamento de Economia*. https://hdl.handle.net/10174/8406
+
+Dally, B. (2017, July 17). Minneapolis Police Chief Janeé Harteau resigns in wake of Justine Damond shooting. *The Minnesota Daily*. https://mndaily.com/208648/city/brharteau/
+
+Iglesias-Pascual, R., Benassi, F., & Paloma, V. (2022). A spatial approach to the study of the electoral resurgence of the extreme right in southern Spain. *Spatial Demography*. https://doi.org/10.1007/s40980-022-00105-1
+
+Kaste, M. (2021, November 3). Minneapolis voters reject a measure to replace the city's police department. *NPR*. https://www.npr.org/2021/11/02/1051617581/minneapolis-police-vote
+
+Lee, H.-C., & Repkine, A. (2022). A spatial analysis of the voting patterns in the South Korean general elections of 2016. *Social Sciences, 11*(9), 389. https://doi.org/10.3390/socsci11090389
+
+Nace, A. (2025, November 5). Progressives on Minneapolis City Council hold on to majority, despite key loss in Ward 7. *CBS News*. https://www.cbsnews.com/minnesota/news/minneapolis-city-council-election-results-2025/
+
+Sepic, M. (2017, November 9). Police controversies, political missteps foiled Hodges in Minneapolis. *MPR News*. https://www.mprnews.org/story/2017/11/09/minneapolis-betsy-hodges-mayoral-career-ends
+
+Spencer, C. (2024, December 11). Mayor Jacob Frey vetoes 2025 budget approved by Minneapolis City Council. *MPR News*. https://www.mprnews.org/story/2024/12/11/minneapolis-city-council-adopts-budget-2025
+
+Ward, M. D., & Gleditsch, K. S. (2008). *Spatial regression models*. Sage.
+
+</div>
