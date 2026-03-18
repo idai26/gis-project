@@ -30,7 +30,7 @@ With these examples in mind, this project will use spatial regression and cluste
 
 Using Moran's I, we can quantify the degree of geographic clustering of a variable. Moran's I ranges from -1 to 1, where -1 suggests a checkerboard pattern of perfect anti-clustering (very high Frey voteshare next to very low Frey vote share), 0 suggests no spatial pattern, and 1 suggests perfect clustering (very high Frey vote share next to similar frey vote shares). For instance, the Moran's I value of 0.629 in Frey's final-round vote share in 2017 suggests a high degree of clustering, akin to findings from legislative election in countries like South Korea and Spain. In other words, geographic clustering in Frey's vote share is similar to the rates found in elections contested by well-established political parties. The p-value of 0.001 means that in fewer than 1 in 1,000 cases does this degree of clustering occur by random chance. 
 
-To determine which regions are significant contributors to the Moran's I statistic, LISA (Local Indicators of Spatial Association) tells us where the clustering is taking place. LISA finds precincts where Frey got a high percentage of the vote that are surrounded by other precincts where he got a high percentage of the vote as well as areas where he got a low percentage of the vote surrounded by other areas wehre he got a low percentage. There are also "High-Low" and "Low-High" precincts, which are precincts where Frey got a high percentage of the vote surrounded by precincts where he got a low percentage of the vote, and vice versa.
+To determine which regions are significant contributors to the Moran's I statistic, LISA (Local Indicators of Spatial Association) tells us where the clustering is taking place. LISA finds precincts where Frey got a high percentage of the vote that are surrounded by other precincts where he got a high percentage of the vote as well as areas where he got a low percentage of the vote surrounded by other areas where he got a low percentage. There are also "High-Low" and "Low-High" precincts, which are precincts where Frey got a high percentage of the vote surrounded by precincts where he got a low percentage of the vote, and vice versa.
 
 
 ## 2017 Mayoral Election: Jacob Frey beats Betsy Hodges
@@ -40,10 +40,10 @@ Jacob Frey has run in and won three Minneapolis mayoral elections, starting by u
 :::{.column-screen-inset}
 :::{.columns}
 :::{.column}
-![Figure 1.1: Jacob Frey's vote share by precinct, 2017](resources/plots/2017_frey_share.png)
+![Figure 1.1: Jacob Frey's vote share by precinct, 2017](resources/plots/2017_frey_share.png){width=100%}
 :::
 :::{.column}
-![Figure 1.2: LISA Clusters of Frey's vote share, 2017](resources/plots/2017_lisa_clusters.png)
+![Figure 1.2: LISA Clusters of Frey's vote share, 2017](resources/plots/2017_lisa_clusters.png){width=100%}
 :::
 :::
 :::
@@ -57,10 +57,10 @@ Four years later, Frey was running as an incumbent, defending his record that ha
 :::{.column-screen-inset}
 :::{.columns}
 :::{.column}
-![Figure 2.1: Jacob Frey's vote share by precinct, 2021](resources/plots/2021_frey_share.png)
+![Figure 2.1: Jacob Frey's vote share by precinct, 2021](resources/plots/2021_frey_share.png){width=100%}
 :::
 :::{.column}
-![Figure 2.2: LISA Clusters of Frey's vote share, 2021](resources/plots/2021_lisa_clusters.png)
+![Figure 2.2: LISA Clusters of Frey's vote share, 2021](resources/plots/2021_lisa_clusters.png){width=100%}
 :::
 :::
 :::
@@ -76,10 +76,10 @@ By 2025, Frey had been mayor for eight years, leading to both hardened oppositio
 :::{.column-screen-inset}
 :::{.columns}
 :::{.column}
-![Figure 3.1: Jacob Frey's vote share by precinct, 2025](resources/plots/2025_frey_share.png)
+![Figure 3.1: Jacob Frey's vote share by precinct, 2025](resources/plots/2025_frey_share.png){width=100%}
 :::
 :::{.column}
-![Figure 3.2: LISA Clusters of Frey's vote share, 2025](resources/plots/2025_lisa_clusters.png)
+![Figure 3.2: LISA Clusters of Frey's vote share, 2025](resources/plots/2025_lisa_clusters.png){width=100%}
 :::
 :::
 :::
@@ -161,7 +161,7 @@ for (yr in c(2017, 2021, 2025)) {
         booktabs = TRUE
       ) |>
       kable_styling(
-        latex_options = c("striped", "hold_position"),
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
         full_width = FALSE
       ) |>
       column_spec(1, bold = TRUE) |>
@@ -190,7 +190,7 @@ for (yr in c(2017, 2021, 2025)) {
         booktabs = TRUE
       ) |>
       kable_styling(
-        latex_options = c("striped", "hold_position"),
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
         full_width = FALSE
       ) |>
       column_spec(1, bold = TRUE) |>
@@ -213,7 +213,7 @@ $$
 y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \epsilon
 $$
 
-where $y$ is the dependent variable, $x_1, x_2, \ldots, x_n$ are the independent variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
+where $y$ is the dependent variable, $x_1, x_2, \ldots, x_n$ are the independent variables, $\beta_0, \beta_1, \ldots, \beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
 
 In spatial regression, we account for the spatial autocorrelation of the error term. When there is spatial clustering in the error term (as diagnosed by calculating Moran's I of the residuals of an OLS regression), we will systematically underestimate the standard errors of regression coefficients. Thus, we need to use a spatial error model to account for the spatial autocorrelation of the error term.
 
@@ -358,7 +358,7 @@ $$
 Frey Share = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \epsilon
 $$
 
-where $x_1, x_2, \ldots, x_n$ are the census variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
+where $x_1, x_2, \ldots, x_n$ are the census variables, $\beta_0, \beta_1, \ldots, \beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
 
 ### Linear Regression Model (OLS) Coefficients
 
