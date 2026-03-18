@@ -11,7 +11,7 @@ $$
 y = \beta_0 + \beta_1 x_1 + \beta_2 x_2 + \cdots + \beta_n x_n + \epsilon
 $$
 
-where $y$ is the dependent variable, $x_1, x_2, \ldots, x_n$ are the independent variables, $\beta_0, \beta_1, \ldots, $\beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
+where $y$ is the dependent variable, $x_1, x_2, \ldots, x_n$ are the independent variables, $\beta_0, \beta_1, \ldots, \beta_n$ are the coefficients, and $\epsilon$ is the error term, which is assumed to be normally distributed with mean 0 and variance $\sigma^2$.
 
 In spatial regression, we account for the spatial autocorrelation of the error term. When there is spatial clustering in the error term (as diagnosed by calculating Moran's I of the residuals of an OLS regression), we will systematically underestimate the standard errors of regression coefficients. Thus, we need to use a spatial error model to account for the spatial autocorrelation of the error term.
 
